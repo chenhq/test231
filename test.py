@@ -25,7 +25,9 @@ trials = Trials()
 best = fmin(objective_func, space, algo=tpe.suggest, max_evals=40, trials=trials)
 print(best)
 
-# best = {'batch_size': 0, 'dropout': 3, 'epochs': 1, 'initializer': 0, 'is_BN_1': 0, 'is_BN_2': 0, 'is_BN_3': 1, 'lr': 0.00026515359970862435, 'recurrent_dropout': 5, 'time_steps': 0, 'units1': 0, 'units2': 3, 'units3': 3}
+# best = {'batch_size': 0, 'dropout': 3, 'epochs': 1, 'initializer': 0,
+# 'is_BN_1': 0, 'is_BN_2': 0, 'is_BN_3': 1, 'lr': 0.00026515359970862435,
+# 'recurrent_dropout': 5, 'time_steps': 0, 'units1': 0, 'units2': 3, 'units3': 3}
 params = space_eval(space, best)
 for i in range(10):
     objective_func(params)
