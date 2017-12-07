@@ -11,7 +11,7 @@ snb.set()
 default_space = {
     'time_steps': hp.choice('time_steps', [8, 16, 32]),
     'batch_size': hp.choice('batch_size', [2, 4, 8]),
-    'epochs': hp.choice('epochs', [100, 200]),  # [100, 200, 500, 1000, 1500, 2000]
+    'epochs': hp.choice('epochs', [100, 200, 300]),  # [100, 200, 500, 1000, 1500, 2000]
 
     'units1': hp.choice('units1', [8, 16, 32, 64]),
     'units2': hp.choice('units2', [8, 16, 32, 64]),
@@ -28,7 +28,29 @@ default_space = {
 }
 
 
-def construct_objective1(data, namespace, performance_func=None, loops=10):
+def train(params, data, namespace, performance_func):
+    train, validate, test = split_data_set(data, params['batch_size'] * params['time_steps'], 3, 1, 1)
+    X_train, Y_train = reform_X_Y(train, params['batch_size'], params['time_steps'])
+    X_validate, Y_validate = reform_X_Y(validate, params['batch_size'], params['time_steps'])
+    X_test, Y_test = reform_X_Y(test, params['batch_size'], params['time_steps'])
+    model = construct_lstm_model(params, X_train.shape[-1], Y_train.shape[-1])
+    log_histroy = LogHistory(namespace)
+    model.fit(X_train, Y_train,
+              batch_size=params['batch_size'],
+              epochs=params['epochs'],
+              verbose=0,
+              validation_data=(X_validate, Y_validate),
+              shuffle=False,
+              callbacks=[log_histroy])
+
+    # loss_and_metrics = model.evaluate(X_test, Y_test, batch_size=params['batch_size'])
+    Y_test_predict = model.predict(X_test)
+    Y_test_predict = np.reshape(Y_test_predict, (-1, Y_test_predict.shape[-1]))
+    cum_returns, measure = performance_func(validate['pct_chg'], Y_test_predict)
+    return cum_returns, measure
+
+
+def construct_objective1(data, namespace, performance_func, loops=10):
     def objective(params):
         print(params)
         log_dir = os.path.join(namespace, str(uuid.uuid1()))
@@ -39,56 +61,27 @@ def construct_objective1(data, namespace, performance_func=None, loops=10):
         with open(params_file, 'w') as output:
             output.write(str(params))
 
-        performances = pd.DataFrame()
+        all_cum_returns = pd.DataFrame()
+        measures = np.array([])
 
         for loop in range(loops):
-            train, validate, test = split_data_set(data, params['batch_size'] * params['time_steps'], 3, 1, 1)
-            X_train, Y_train = reform_X_Y(train, params['batch_size'], params['time_steps'])
-            X_validate, Y_validate = reform_X_Y(validate, params['batch_size'], params['time_steps'])
-            X_test, Y_test = reform_X_Y(test, params['batch_size'], params['time_steps'])
-            model = construct_lstm_model(params, X_train.shape[-1], Y_train.shape[-1])
-            log_histroy = LogHistory(log_dir)
-            model.fit(X_train, Y_train,
-                      batch_size=params['batch_size'],
-                      epochs=params['epochs'],
-                      verbose=0,
-                      validation_data=(X_validate, Y_validate),
-                      shuffle=False,
-                      callbacks=[log_histroy])
+            cum_returns, measure = train(params, data, namespace, performance_func)
+            measures = np.append(measures, measure)
+            all_cum_returns = pd.concat([all_cum_returns, cum_returns], axis=1)
 
-            # loss_and_metrics = model.evaluate(X_test, Y_test, batch_size=params['batch_size'])
-            Y_test_predict = model.predict(X_test)
-            Y_test_predict = np.reshape(Y_test_predict, (-1, Y_test_predict.shape[-1]))
-            performance = performance_func(validate['pct_chg'], Y_test_predict)
+        all_cum_returns.columns = [str(loop) for loop in range(loops)]
+        all_cum_returns = all_cum_returns.ffill().fillna(0)
+        all_cum_returns['mean'] = all_cum_returns.mean(axis=1)
 
-            performances = pd.concat([performances, performance], axis=1)
-
-        performances.columns = [str(loop) for loop in range(loops)]
-        performances = performances.ffill().fillna(1)
-        performances['mean'] = performances.mean(axis=1)
-
-        performances_plot_file = os.path.join(log_dir, "performances.png")
-        ax = performances.plot()
+        cum_returns_plot_file = os.path.join(log_dir, "cum_returns.png")
+        ax = all_cum_returns.plot()
         fig = ax.get_figure()
         plt.legend()
-        fig.savefig(performances_plot_file)
+        fig.savefig(cum_returns_plot_file)
+        plt.close()
 
-        # plt.savefig(performances_plot_file)
-        # plt.close()
-
-        # profit_pred, _, _ = utils.profit(model.predict(X_validate), cls_validate)
-        # utils.plot_curve(result_file, Y_validate, model.predict(X_validate), cls_validate, 0)
-        # utils.plot_curve(result_file, Y_test, model.predict(X_test), cls_test, 1)
-        # return {'loss': -profit_pred[-1], 'status': STATUS_OK}
-        # return {'loss': loss_and_metrics[0], 'status': STATUS_OK}
-        loss = -performances.iloc[-1]['mean']
+        loss = -measures.mean()
         print("loss: {0}".format(loss))
         return {'loss': loss, 'status': STATUS_OK}
 
     return objective
-
-# space = default_space
-# objective_func = construct_objective(features_categorical)
-# trials = Trials()
-# best = fmin(objective_func, space, algo=tpe.suggest, max_evals=40, trials=trials)
-# print(best)

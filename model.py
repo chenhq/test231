@@ -2,7 +2,6 @@ from keras.layers import LSTM, Dense, BatchNormalization, TimeDistributed
 from keras.models import Sequential
 from keras.optimizers import RMSprop
 
-
 def construct_lstm_model(params, input_size, output_size):
     model = Sequential()
     model.add(LSTM(int(params['units1']),
@@ -41,3 +40,7 @@ def construct_lstm_model(params, input_size, output_size):
     model.compile(optimizer=RMSprop(lr=params['lr']), loss='categorical_crossentropy', metrics=['accuracy'])
 
     return model
+
+
+
+

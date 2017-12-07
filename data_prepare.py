@@ -110,7 +110,7 @@ def split_data_set(data, minimum_size=128, train_ratio=3, test_ratio=1, validate
 
 # performance_score
 def performance_factory(reverse_func, performace_type='annual_return'):
-    def annual_return(pct_chg, y):
+    def performance_measures(pct_chg, y):
         y_init = list(map(reverse_func, y))
         predict = pd.Series(index=pct_chg.index, data=y_init)
         predict.name = 'label'
@@ -120,23 +120,11 @@ def performance_factory(reverse_func, performace_type='annual_return'):
         df.loc[(abs(df['label'] - 2)) < epsilon, 'return'] = pct_chg/100.0
         df.loc[(abs(df['label'])) < epsilon, 'return'] = -pct_chg/100.0
         returns = df['return']
-        annual_return_value = empyrical.annual_return(returns)
-        return annual_return_value
-
-    def sharpe_ratio(pct_chg, y):
-        y_init = list(map(reverse_func, y))
-        predict = pd.Series(index=pct_chg.index, data=y_init)
-        predict.name = 'label'
-        df = pd.concat([pct_chg, predict], axis=1)
-        df['return'] = 0
-        epsilon = 0.0001
-        df.loc[(abs(df['label'] - 2)) < epsilon, 'return'] = pct_chg / 100.0
-        df.loc[(abs(df['label'])) < epsilon, 'return'] = -pct_chg / 100.0
-        returns = df['return']
-        sharpe_ratio_value = empyrical.sharpe_ratio(returns)
-        return sharpe_ratio_value
-
-    if performace_type == 'annual_return':
-        return annual_return
-    elif performace_type == 'sharpe_ratio':
-        return sharpe_ratio
+        cum_returns_value = empyrical.cum_returns(returns)
+        measure = 0
+        if performace_type == 'annual_return':
+            measure = empyrical.annual_return(returns)
+        elif performace_type == 'sharpe_ratio':
+            measure = empyrical.sharpe_ratio(returns)
+        return cum_returns_value, measure
+    return performance_measures
