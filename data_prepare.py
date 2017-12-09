@@ -109,8 +109,9 @@ def split_data_set(data, minimum_size=128, train_ratio=3, test_ratio=1, validate
 
 
 # performance_score
-def performance_factory(reverse_func, performace_type='annual_return'):
+def performance_factory(reverse_func, performace_types=['returns']):
     def performance_measures(pct_chg, y):
+        result = {}
         y_init = list(map(reverse_func, y))
         predict = pd.Series(index=pct_chg.index, data=y_init)
         predict.name = 'label'
@@ -120,11 +121,14 @@ def performance_factory(reverse_func, performace_type='annual_return'):
         df.loc[(abs(df['label'] - 2)) < epsilon, 'return'] = pct_chg/100.0
         df.loc[(abs(df['label'])) < epsilon, 'return'] = -pct_chg/100.0
         returns = df['return']
-        cum_returns_value = empyrical.cum_returns(returns)
-        measure = 0
-        if performace_type == 'annual_return':
-            measure = empyrical.annual_return(returns)
-        elif performace_type == 'sharpe_ratio':
-            measure = empyrical.sharpe_ratio(returns)
-        return cum_returns_value, measure
+
+        if 'returns' in performace_types:
+            result['returns'] = returns
+        if 'cum_returns' in performace_types:
+            result['cum_returns'] = empyrical.cum_returns(returns)
+        if 'annual_return' in performace_types:
+            result['annual_return'] = empyrical.annual_return(returns)
+        if 'sharpe_ratio' in performace_types:
+            result['sharpe_ratio'] = empyrical.sharpe_ratio(returns)
+        return result
     return performance_measures

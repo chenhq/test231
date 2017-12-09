@@ -6,6 +6,7 @@ from data_prepare import *
 from log_history import *
 from model import *
 import seaborn as snb
+
 snb.set()
 
 default_space = {
@@ -28,32 +29,12 @@ default_space = {
 }
 
 
-def train(params, data, namespace, performance_func):
-    train, validate, test = split_data_set(data, params['batch_size'] * params['time_steps'], 3, 1, 1)
-    X_train, Y_train = reform_X_Y(train, params['batch_size'], params['time_steps'])
-    X_validate, Y_validate = reform_X_Y(validate, params['batch_size'], params['time_steps'])
-    X_test, Y_test = reform_X_Y(test, params['batch_size'], params['time_steps'])
-    model = construct_lstm_model(params, X_train.shape[-1], Y_train.shape[-1])
-    log_histroy = LogHistory(namespace)
-    model.fit(X_train, Y_train,
-              batch_size=params['batch_size'],
-              epochs=params['epochs'],
-              verbose=0,
-              validation_data=(X_validate, Y_validate),
-              shuffle=False,
-              callbacks=[log_histroy])
-
-    # loss_and_metrics = model.evaluate(X_test, Y_test, batch_size=params['batch_size'])
-    Y_test_predict = model.predict(X_test)
-    Y_test_predict = np.reshape(Y_test_predict, (-1, Y_test_predict.shape[-1]))
-    cum_returns, measure = performance_func(validate['pct_chg'], Y_test_predict)
-    return cum_returns, measure
-
-
 def construct_objective1(data, namespace, performance_func, loops=10):
     def objective(params):
-        print(params)
-        log_dir = os.path.join(namespace, str(uuid.uuid1()))
+        identity = str(uuid.uuid1())
+        print("identity: {0}, params: {1}".format(identity, params))
+
+        log_dir = os.path.join(namespace, identity)
         if not os.path.exists(log_dir):
             os.mkdir(log_dir)
 
@@ -65,7 +46,24 @@ def construct_objective1(data, namespace, performance_func, loops=10):
         measures = np.array([])
 
         for loop in range(loops):
-            cum_returns, measure = train(params, data, namespace, performance_func)
+            train, validate, test = split_data_set(data, params['batch_size'] * params['time_steps'], 3, 1, 1)
+            X_train, Y_train = reform_X_Y(train, params['batch_size'], params['time_steps'])
+            X_validate, Y_validate = reform_X_Y(validate, params['batch_size'], params['time_steps'])
+            X_test, Y_test = reform_X_Y(test, params['batch_size'], params['time_steps'])
+            model = construct_lstm_model(params, X_train.shape[-1], Y_train.shape[-1])
+            log_histroy = LogHistory(os.path.join(log_dir, 'history.log'))
+            model.fit(X_train, Y_train,
+                      batch_size=params['batch_size'],
+                      epochs=params['epochs'],
+                      verbose=0,
+                      validation_data=(X_validate, Y_validate),
+                      shuffle=False,
+                      callbacks=[log_histroy])
+
+            # loss_and_metrics = model.evaluate(X_test, Y_test, batch_size=params['batch_size'])
+            Y_test_predict = model.predict(X_test)
+            Y_test_predict = np.reshape(Y_test_predict, (-1, Y_test_predict.shape[-1]))
+            cum_returns, measure = performance_func(validate['pct_chg'], Y_test_predict)
             measures = np.append(measures, measure)
             all_cum_returns = pd.concat([all_cum_returns, cum_returns], axis=1)
 
@@ -85,3 +83,49 @@ def construct_objective1(data, namespace, performance_func, loops=10):
         return {'loss': loss, 'status': STATUS_OK}
 
     return objective
+
+
+def construct_objective2(data_set, namespace, performance_func, measure):
+    def objective(params):
+        identity = str(uuid.uuid1())
+        print("identity: {0}, params: {1}".format(identity, params))
+
+        log_dir = os.path.join(namespace, identity)
+        if not os.path.exists(log_dir):
+            os.mkdir(log_dir)
+
+        params_file = os.path.join(log_dir, "params.txt")
+        with open(params_file, 'w') as output:
+            output.write(str(params))
+
+        train, validate = data_set['train'], data_set['validate']
+        X_train, Y_train = reform_X_Y(train, params['batch_size'], params['time_steps'])
+        X_validate, Y_validate = reform_X_Y(validate, params['batch_size'], params['time_steps'])
+        model = construct_lstm_model(params, X_train.shape[-1], Y_train.shape[-1])
+        log_histroy = LogHistory(os.path.join(log_dir, 'history.log'))
+        model.fit(X_train, Y_train,
+                  batch_size=params['batch_size'],
+                  epochs=params['epochs'],
+                  verbose=0,
+                  validation_data=(X_validate, Y_validate),
+                  shuffle=False,
+                  callbacks=[log_histroy])
+
+        Y_validate_predict = model.predict(X_validate)
+        Y_validate_predict = np.reshape(Y_validate_predict, (-1, Y_validate_predict.shape[-1]))
+        performances = performance_func(validate['pct_chg'], Y_validate_predict)
+
+        if 'returns' in performances:
+            performances['returns'].to_csv(os.path.join(log_dir, 'returns.log'))
+        if 'cum_returns' in performances:
+            performances['cum_returns'].to_csv(os.path.join(log_dir, 'cum_returns.log'))
+        if 'annual_return' in performances:
+            performances['annual_return'].to_csv(os.path.join(log_dir, 'annual_return.log'))
+        if 'sharpe_ratio' in performances:
+            performances['sharpe_ratio'].to_csv(os.path.join(log_dir, 'sharpe_ratio.log'))
+
+        loss = -performances[measure]
+        print("loss: {0}".format(loss))
+        return {'loss': loss, 'status': STATUS_OK}
+    return objective
+

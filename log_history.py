@@ -5,21 +5,22 @@ import pandas as pd
 
 
 class LogHistory(keras.callbacks.Callback):
-    def __init__(self, log_dir):
-        self.log_dir = log_dir
-        if not os.path.exists(log_dir):
-            os.mkdir(log_dir)
-
+    def __init__(self, filename):
+        self.filename = filename
         super(LogHistory, self).__init__()
 
+    def set_filename(self, filename):
+        self.filename = filename
+
     def on_train_begin(self, logs={}):
-        log_name = str(uuid.uuid1()) + ".log"
-        self.log_file = os.path.join(self.log_dir, log_name)
         columns = ['loss', 'acc', 'val_loss', 'val_acc']
         self.epoch_history_data = pd.DataFrame(columns=columns)
 
     def on_train_end(self, logs=None):
-        self.epoch_history_data.to_csv(self.log_file, index=False)
+        dirs = os.path.dirname(self.filename)
+        if not os.path.exists(dirs):
+            os.makedirs(dirs)
+        self.epoch_history_data.to_csv(self.filename)
 
     # def on_batch_end(self, batch, logs={}):
     #

@@ -21,7 +21,7 @@ features_categorical, reverse_func = to_categorical(features.copy(), 'label', ca
 
 space = default_space
 
-performance_measure = performance_factory(reverse_func, performace_type='annual_return')
+performance_measure = performance_factory(reverse_func, performace_type=['cum_returns', 'annual_return'])
 
 objective_func = construct_objective1(features_categorical, "logs", performance_measure, loops=3)
 trials = Trials()
