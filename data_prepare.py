@@ -80,6 +80,34 @@ def split_data_by_sample(data, split_dict, minimum_size):
     return result
 
 
+def multi_code_data_by_date(data, dates, batch_size=128):
+    new_data = data.set_index(['code', 'date'])
+    split_train_validate_date = dates[0]
+    split_validate_test_date = dates[1]
+    train, validate, test = pd.DataFrame(), pd.DataFrame(), pd.DataFrame()
+
+    idxs = pd.IndexSlice
+    for code in new_data.index.get_level_values('code'):
+        code_train = new_data.loc[idxs[code, :split_train_validate_date], idxs[:]],
+        round = len(code_train) // batch_size * batch_size
+        new_code_train = code.tail(round)
+
+        code_validate = new_data.loc[idxs[code, split_train_validate_date:split_validate_test_date], idxs[:]],
+        round = len(code_validate) // batch_size * batch_size
+        new_code_validate = code.tail(round)
+
+        code_test = new_data.loc[idxs[code, split_validate_test_date:], idxs[:]]
+        round = len(code_test) // batch_size * batch_size
+        new_code_test = code.tail(round)
+
+        train = pd.concat([train, new_code_train], axis=1)
+        validate = pd.concat([validate, new_code_validate], axis=1)
+        test = pd.concat([test, new_code_test], axis=1)
+
+    result = {'train': train, 'validate': validate, 'test': test}
+    return result
+
+
 def reform_X_Y(data, batch_size, timesteps, target_field='label'):
     size = len(data)
     if size % (int(batch_size) * int(timesteps)) != 0:
