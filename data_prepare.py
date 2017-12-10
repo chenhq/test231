@@ -9,9 +9,18 @@ def construct_features(ohlcv, construct_features_func):
     return construct_features_func(ohlcv)
 
 
+def construct_features_for_multi_stock(sorted_multi_stock_ohlcv, construct_features_func):
+    result = pd.DataFramerame()
+    idxs = pd.IndexSlice
+    for stk in sorted_multi_stock_ohlcv.index.get_level_values('code').unique():
+        stk_ohlcv = sorted_multi_stock_ohlcv.loc[idxs[stk, :], idxs[:]]
+        stk_features = construct_features_func(stk_ohlcv)
+        result = pd.concat([result, stk_features], axis=0)
+    return result
+
+
 def construct_features1(ohlcv):
     data = pd.DataFrame(index=ohlcv.index)
-    data['close'] = ohlcv['close']
     data['open_close'] = (ohlcv['open'] - ohlcv['close']) * 100 / ohlcv['close'].shift(1)
     data['high_close'] = (ohlcv['high'] - ohlcv['close']) * 100 / ohlcv['close'].shift(1)
     data['low_close'] = (ohlcv['low'] - ohlcv['close']) * 100 / ohlcv['close'].shift(1)
@@ -80,29 +89,29 @@ def split_data_by_sample(data, split_dict, minimum_size):
     return result
 
 
-def multi_code_data_by_date(data, dates, batch_size=128):
-    new_data = data.set_index(['code', 'date'])
+def split_multi_stock_features_by_date(multi_stocks_sorted_features, dates, batch_size=128):
     split_train_validate_date = dates[0]
     split_validate_test_date = dates[1]
     train, validate, test = pd.DataFrame(), pd.DataFrame(), pd.DataFrame()
 
     idxs = pd.IndexSlice
-    for code in new_data.index.get_level_values('code'):
-        code_train = new_data.loc[idxs[code, :split_train_validate_date], idxs[:]],
-        round = len(code_train) // batch_size * batch_size
-        new_code_train = code.tail(round)
+    for stk in multi_stocks_sorted_features.index.get_level_values('code').unique():
+        print("spliting stock: {0}".format(stk))
+        code_train = new_data.loc[idxs[stk, :split_train_validate_date], idxs[:]]
+        round_int = len(code_train) // batch_size * batch_size
+        new_code_train = code_train.tail(round_int)
 
-        code_validate = new_data.loc[idxs[code, split_train_validate_date:split_validate_test_date], idxs[:]],
-        round = len(code_validate) // batch_size * batch_size
-        new_code_validate = code.tail(round)
+        code_validate = new_data.loc[idxs[stk, split_train_validate_date:split_validate_test_date], idxs[:]]
+        round_int = len(code_validate) // batch_size * batch_size
+        new_code_validate = code_validate.tail(round_int)
 
-        code_test = new_data.loc[idxs[code, split_validate_test_date:], idxs[:]]
-        round = len(code_test) // batch_size * batch_size
-        new_code_test = code.tail(round)
+        code_test = new_data.loc[idxs[stk, split_validate_test_date:], idxs[:]]
+        round_int = len(code_test) // batch_size * batch_size
+        new_code_test = code_test.tail(round_int)
 
-        train = pd.concat([train, new_code_train], axis=1)
-        validate = pd.concat([validate, new_code_validate], axis=1)
-        test = pd.concat([test, new_code_test], axis=1)
+        train = pd.concat([train, new_code_train], axis=0)
+        validate = pd.concat([validate, new_code_validate], axis=0)
+        test = pd.concat([test, new_code_test], axis=0)
 
     result = {'train': train, 'validate': validate, 'test': test}
     return result
