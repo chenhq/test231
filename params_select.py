@@ -27,7 +27,7 @@ default_space = {
     'dropout': hp.choice('dropout', [0, 0.1, 0.2, 0.3, 0.4, 0.5]),
     'recurrent_dropout': hp.choice('recurrent_dropout', [0, 0.1, 0.2, 0.3, 0.4, 0.5]),
     'initializer': hp.choice('initializer', [glorot_uniform(seed=123)]),
-    'min_delta': hp.quniform('min_delta', 0.0002, 0.001, 0.002),
+    'min_delta': hp.quniform('min_delta', 0.0002, 0.001, 0.0002),
     'patience': hp.quniform('patience', 10, 100, 10),
 }
 
