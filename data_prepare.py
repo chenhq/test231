@@ -10,8 +10,8 @@ def construct_features(ohlcv, construct_features_func):
     return construct_features_func(ohlcv)
 
 
-def construct_features_for_stocks(ohlcv_dict, construct_features_func, processes=0):
-    stock_features_dict = {}
+def construct_features_for_stocks(ohlcv_list, construct_features_func, processes=3):
+    stock_features_list = []
 
     if processes <= 0:
         processes = multiprocessing.cpu_count()
@@ -19,20 +19,17 @@ def construct_features_for_stocks(ohlcv_dict, construct_features_func, processes
     pool = multiprocessing.Pool(processes=processes)
 
     def callback(result):
-        stk, features = result
-        stock_features_dict[stk] = features
+        stock_features_list.append(result)
 
-    def work(stk, ohlcv):
-        stock_features = construct_features_func(ohlcv)
-        return stk, stock_features
+    def print_error(err):
+        print(err)
 
-    for stk in ohlcv_dict:
-        ohlcv = ohlcv_dict[stk]
-        pool.apply_async(work, (stk, ohlcv, ), callback=callback)
+    for ohlcv in ohlcv_list:
+        pool.apply_async(construct_features_func, args=(ohlcv,), callback=callback, error_callback=print_error)
 
     pool.close()
     pool.join()
-    return stock_features_dict
+    return stock_features_list
 
 
 def construct_features1(ohlcv):
@@ -45,8 +42,8 @@ def construct_features1(ohlcv):
 
     next_ma5 = SMA(ohlcv, timeperiod=5).shift(-5)
     data['label'] = 1
-    data.loc[data['close'] < next_ma5, 'label'] = 0
-    data.loc[data['close'] > next_ma5, 'label'] = 2
+    data.loc[ohlcv['close'] < next_ma5, 'label'] = 0
+    data.loc[ohlcv['close'] > next_ma5, 'label'] = 2
 
     ma15_volume = ohlcv['volume'].rolling(15).mean()
     data['volume'] = ohlcv['volume'] / ma15_volume
@@ -79,37 +76,6 @@ def to_categorical(data, column, func):
     return data, reverse_func
 
 
-def data_set_to_categorical(data_set, column, func, processes=0):
-    if processes <= 0:
-        processes = multiprocessing.cpu_count()
-
-    pool = multiprocessing.Pool(processes=processes)
-
-    new_data_set = {}
-
-    reverse_func = None
-
-    def callback(result):
-        key, new_data = result
-        new_data_set[key] = new_data
-
-    def work(key, data):
-        new_data, reverse_func = to_categorical(data, column, func)
-        return key, new_data
-
-    for key in data_set:
-        data = data_set[key]
-        pool.apply_async(work, (key, data, ), callback=callback)
-
-    pool.close()
-    pool.join()
-    return new_data_set, reverse_func
-
-
-def data_split_by_idx(data, idxes):
-    pass
-
-
 def split_data_by_sample(data, split_dict, minimum_size):
     result = {}
     length = len(data)
@@ -132,27 +98,21 @@ def split_data_by_sample(data, split_dict, minimum_size):
     return result
 
 
-def split_data_set_by_date(features_dict, dates, minimum_size=128, processes=0):
+def split_data_set_by_date(features_list, dates, minimum_size=128, processes=0):
     if processes <= 0:
         processes = multiprocessing.cpu_count()
 
     pool = multiprocessing.Pool(processes=processes)
 
-    train_set, validate_set, test_set = {}, {}, {}
+    train_set, validate_set, test_set = [], [], []
 
     def callback(result):
-        stk, data_set = result
-        train_set[stk] = data_set['train']
-        validate_set[stk] = data_set['validate']
-        test_set[stk] = data_set['test']
+        train_set.append(result['train'])
+        validate_set.append(result['validate'])
+        test_set.append(result['test'])
 
-    def work(stk, features):
-        data_set = split_data_by_date(features, dates, minimum_size=minimum_size)
-        return stk, data_set
-
-    for stk in features_dict:
-        features = features_dict[stk]
-        pool.apply_async(work, (stk, features, ), callback=callback)
+    for features in features_list:
+        pool.apply_async(split_data_by_date, (features, dates, minimum_size,), callback=callback)
 
     pool.close()
     pool.join()
@@ -199,30 +159,8 @@ def reform_X_Y(data, batch_size, timesteps, target_field='label'):
     return X, Y
 
 
-def flatten_stock_features(stock_features_set):
-    result = pd.DataFrame()
-    for stk in stock_features_set:
-        stock_features = stock_features_set[stk]
-        result = pd.concat([result, stock_features.reset_index()], axis=0)
-
-    result = result.set_index(['code', 'date']).sort_index()
-    return result
-
-
-
-
-def split_data_set(data, minimum_size=128, train_ratio=3, test_ratio=1, validate_ratio=1):
-    result = split_data_by_sample(data, {"train": train_ratio, "validate": validate_ratio, "test": test_ratio},
-                                  minimum_size)
-    train = result['train']
-    validate = result['validate']
-    test = result['test']
-
-    return train, validate, test
-
-
 # performance_score
-def performance_factory(reverse_func, performace_types=['returns']):
+def performance_factory(reverse_func, performance_types=['returns']):
     def performance_measures(pct_chg, y):
         result = {}
         y_init = list(map(reverse_func, y))
@@ -235,13 +173,14 @@ def performance_factory(reverse_func, performace_types=['returns']):
         df.loc[(abs(df['label'])) < epsilon, 'return'] = -pct_chg/100.0
         returns = df['return']
 
-        if 'returns' in performace_types:
+        if 'returns' in performance_types:
             result['returns'] = returns
-        if 'cum_returns' in performace_types:
+        if 'cum_returns' in performance_types:
             result['cum_returns'] = empyrical.cum_returns(returns)
-        if 'annual_return' in performace_types:
+        if 'annual_return' in performance_types:
             result['annual_return'] = empyrical.annual_return(returns)
-        if 'sharpe_ratio' in performace_types:
+        if 'sharpe_ratio' in performance_types:
             result['sharpe_ratio'] = empyrical.sharpe_ratio(returns)
         return result
     return performance_measures
+
