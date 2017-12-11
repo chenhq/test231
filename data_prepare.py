@@ -141,17 +141,13 @@ def split_data_by_date(data, dates, minimum_size):
     return result
 
 
-def reform_X_Y(data, batch_size, timesteps, target_field='label'):
-    size = len(data)
-    mininum_size = batch_size * timesteps
-    new_size = size // mininum_size * mininum_size
-    new_data = data.tail(new_size)
-    columns = new_data.columns.tolist()
+def reform_X_Y(data, timesteps, target_field='label'):
+    columns = data.columns.tolist()
     if target_field not in columns:
         return None, None
     x_columns = columns
     x_columns.remove(target_field)
-    X, Y0 = new_data.loc[:, x_columns].values, new_data.loc[:, target_field].values
+    X, Y0 = data.loc[:, x_columns].values, data.loc[:, target_field].values
     X = X.reshape((-1, timesteps, X.shape[1]))
     Y = np.array([np.array(y) for y in Y0])
     Y = Y.reshape((-1, timesteps, Y.shape[1]))

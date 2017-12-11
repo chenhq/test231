@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 from hyperopt import hp, STATUS_OK
 from keras.initializers import glorot_uniform
-
+from keras.callbacks import EarlyStopping
 from data_prepare import *
 from log_history import *
 from model import *
@@ -26,7 +26,9 @@ default_space = {
     'lr': hp.uniform('lr', 0.0001, 0.001),
     'dropout': hp.choice('dropout', [0, 0.1, 0.2, 0.3, 0.4, 0.5]),
     'recurrent_dropout': hp.choice('recurrent_dropout', [0, 0.1, 0.2, 0.3, 0.4, 0.5]),
-    'initializer': hp.choice('initializer', [glorot_uniform(seed=123)])
+    'initializer': hp.choice('initializer', [glorot_uniform(seed=123)]),
+    'min_delta': hp.quniform('min_delta', 0.0002, 0.001, 0.002),
+    'patience': hp.quniform('patience', 10, 100, 10),
 }
 
 
@@ -100,17 +102,25 @@ def construct_objective2(data_set, namespace, performance_func, measure):
             output.write(str(params))
 
         train, validate = data_set['train'], data_set['validate']
-        X_train, Y_train = reform_X_Y(train, params['batch_size'], params['time_steps'])
-        X_validate, Y_validate = reform_X_Y(validate, params['batch_size'], params['time_steps'])
+
+        minimum_size = params['batch_size'] * params['time_steps']
+        train_available_length = len(train) // minimum_size * minimum_size
+        train = train.tail(train_available_length)
+        validate_available_length = len(validate) // minimum_size * minimum_size
+        validate = validate.tail(validate_available_length)
+
+        X_train, Y_train = reform_X_Y(train, params['time_steps'])
+        X_validate, Y_validate = reform_X_Y(validate, params['time_steps'])
         model = construct_lstm_model(params, X_train.shape[-1], Y_train.shape[-1])
         log_histroy = LogHistory(os.path.join(log_dir, 'history.log'))
+        early_stop = EarlyStopping(monitor='val_loss', min_delta=params['min_delta'], patience=params['patience'], verbose=2, mode='auto')
         model.fit(X_train, Y_train,
                   batch_size=params['batch_size'],
                   epochs=params['epochs'],
                   verbose=0,
                   validation_data=(X_validate, Y_validate),
                   shuffle=params['shuffle'],
-                  callbacks=[log_histroy])
+                  callbacks=[log_histroy, early_stop])
 
         Y_validate_predict = model.predict(X_validate)
         Y_validate_predict = np.reshape(Y_validate_predict, (-1, Y_validate_predict.shape[-1]))
@@ -122,10 +132,10 @@ def construct_objective2(data_set, namespace, performance_func, measure):
             performances['cum_returns'].to_csv(os.path.join(log_dir, 'cum_returns.log'))
         if 'annual_return' in performances:
             with open(os.path.join(log_dir, 'annual_return.log'), 'w') as output:
-                output.write(performances['annual_return'])
+                output.write(str(performances['annual_return']))
         if 'sharpe_ratio' in performances:
             with open(os.path.join(log_dir, 'sharpe_ratio.log'), 'w') as output:
-                output.write(performances['sharpe_ratio'])
+                output.write(str(performances['sharpe_ratio']))
 
         loss = -performances[measure]
         print("identity: {0}, loss: {1}".format(identity, loss))
