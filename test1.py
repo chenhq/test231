@@ -22,7 +22,6 @@ for stk in all_ohlcv.index.get_level_values('code').unique():
 
 stk_features_list = construct_features_for_stocks(stk_ohlcv_list, construct_features1)
 
-
 flatten_stk_features_list, reverse_func = to_categorical(pd.concat(stk_features_list, axis=0), 'label',
                                                          categorical_func_factory)
 
@@ -30,7 +29,6 @@ new_stk_features_list = []
 for stk in flatten_stk_features_list.index.get_level_values('code').unique():
     new_stk_features = flatten_stk_features_list.loc[idx_slice[stk, :], idx_slice[:]]
     new_stk_features_list.append(new_stk_features)
-
 
 split_dates = ["2016-01-01", "2017-03-01"]
 
@@ -46,7 +44,6 @@ space = default_space
 
 performance_measure = performance_factory(reverse_func,
                                           performance_types=['return', 'annual_return', 'sharpe_ratio'])
-
 
 objective_func = construct_objective2(data_set, "logs", performance_measure, 'sharpe_ratio')
 
