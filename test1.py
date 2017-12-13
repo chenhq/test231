@@ -48,7 +48,7 @@ if __name__ == '__main__':
                                               performance_types=['Y', 'returns', 'cum_returns', 'annual_return',
                                                                  'sharpe_ratio'])
 
-    objective_func = construct_objective2(data_set, "logs", performance_measure, 'sharpe_ratio', include_test=True)
+    objective_func = construct_objective2(data_set, "logs", performance_measure, 'sharpe_ratio', include_test_data=True)
 
     trials = Trials()
 

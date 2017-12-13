@@ -13,7 +13,7 @@ default_space = {
     'time_steps': hp.choice('time_steps', [32, 64, 128]),
     'batch_size': hp.choice('batch_size', [64, 128]),
     'epochs': hp.choice('epochs', [100, 200, 300, 400, 500]),  # [100, 200, 500, 1000, 1500, 2000]
-    'shuffle':  hp.choice('shuffle', [False, True]),
+    'shuffle': hp.choice('shuffle', [False, True]),
 
     'units1': hp.choice('units1', [32, 64, 128, 256]),
     'units2': hp.choice('units2', [32, 64, 128, 256]),
@@ -88,7 +88,7 @@ default_space = {
 #     return objective
 
 
-def construct_objective2(data_set, namespace, performance_func, measure, include_test=False):
+def construct_objective2(data_set, namespace, performance_func, measure, include_test_data=False, shuffle_test=False):
     def objective(params):
         identity = str(uuid.uuid1())
         print("identity: {0}, params: {1}".format(identity, params))
@@ -124,37 +124,47 @@ def construct_objective2(data_set, namespace, performance_func, measure, include
                   shuffle=params['shuffle'],
                   callbacks=[log_histroy])  # early_stop
 
-        predict_X_dict = {'validate': [X_validate, validate]}
-        if include_test:
+        to_be_predict_set = {}
+        to_be_predict_set['validate'] = [validate, X_validate]
+
+        if include_test_data:
             test = data_set['test']
             test_available_length = len(test) // minimum_size * minimum_size
             test = test.tail(test_available_length)
             X_test, _ = reform_X_Y(test, params['time_steps'])
 
-            predict_X_dict['test'] = [X_test, test]
+            to_be_predict_set['test'] = [test, X_test]
 
-        for key in predict_X_dict:
-            X = predict_X_dict[key][0]
-            Y_predict = model.predict(X)
-            Y_predict = np.reshape(Y_predict, (-1, Y_predict.shape[-1]))
-            performances = performance_func(predict_X_dict[key][1]['pct_chg'], Y_predict)
-
-            if 'Y' in performances:
-                performances['Y'].reset_index().to_csv(os.path.join(log_dir, '%s_Y.log' % key))
-            if 'returns' in performances:
-                performances['returns'].reset_index().to_csv(os.path.join(log_dir, '%s_returns.log' % key))
-            if 'cum_returns' in performances:
-                performances['cum_returns'].reset_index().to_csv(os.path.join(log_dir, '%s_cum_returns.log' % key))
-            if 'annual_return' in performances:
-                with open(os.path.join(log_dir, '%s_annual_return.log' % key), 'w') as output:
-                    output.write(str(performances['annual_return']))
-            if 'sharpe_ratio' in performances:
-                with open(os.path.join(log_dir, '%s_sharpe_ratio.log' % key), 'w') as output:
-                    output.write(str(performances['sharpe_ratio']))
-            if key == 'validate':
+        loss = 0
+        for tag in to_be_predict_set:
+            performances = model_predict(model, to_be_predict_set[tag][0], to_be_predict_set[tag][1], tag, log_dir)
+            if tag == 'validate':
                 loss = -performances[measure]
+
+        if shuffle_test == True:
+            # TODO
+
 
         print("identity: {0}, loss: {1}".format(identity, loss))
         return {'loss': loss, 'status': STATUS_OK}
+
     return objective
 
+
+def model_predict(model, raw_data, X, tag, log_dir, performance_func):
+    Y_predict = model.predict(X)
+    Y_predict = np.reshape(Y_predict, (-1, Y_predict.shape[-1]))
+    performances = performance_func(raw_data['pct_chg'], Y_predict)
+    if 'Y' in performances:
+        performances['Y'].reset_index().to_csv(os.path.join(log_dir, '%s_Y.log' % tag))
+    if 'returns' in performances:
+        performances['returns'].reset_index().to_csv(os.path.join(log_dir, '%s_returns.log' % tag))
+    if 'cum_returns' in performances:
+        performances['cum_returns'].reset_index().to_csv(os.path.join(log_dir, '%s_cum_returns.log' % tag))
+    if 'annual_return' in performances:
+        with open(os.path.join(log_dir, '%s_annual_return.log' % tag), 'w') as output:
+            output.write(str(performances['annual_return']))
+    if 'sharpe_ratio' in performances:
+        with open(os.path.join(log_dir, '%s_sharpe_ratio.log' % tag), 'w') as output:
+            output.write(str(performances['sharpe_ratio']))
+    return performances
