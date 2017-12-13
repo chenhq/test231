@@ -164,10 +164,14 @@ def performance_factory(reverse_func, performance_types=['returns']):
         df = pd.concat([pct_chg, predict], axis=1)
         df['return'] = 0
         epsilon = 0.0001
-        df.loc[(abs(df['label'] - 2)) < epsilon, 'return'] = pct_chg/100.0
-        df.loc[(abs(df['label'])) < epsilon, 'return'] = -pct_chg/100.0
+        long_cond = (abs(df['label'] - 2)) < epsilon
+        short_cond = (abs(df['label'])) < epsilon
+        df.loc[long_cond, 'return'] = pct_chg.loc[long_cond]/100.0
+        df.loc[short_cond, 'return'] = -pct_chg[short_cond]/100.0
         returns = df['return']
 
+        if 'Y' in performance_types:
+            result['Y'] = predict
         if 'returns' in performance_types:
             result['returns'] = returns
         if 'cum_returns' in performance_types:
