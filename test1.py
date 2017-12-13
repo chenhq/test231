@@ -1,3 +1,7 @@
+import os
+# os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"   # see issue #152
+# os.environ["CUDA_VISIBLE_DEVICES"] = ""
+# %load test1.py
 import numpy as np
 import pandas as pd
 from data_prepare import *
@@ -7,8 +11,8 @@ import hyperopt.pyll.stochastic
 from hyperopt import fmin, tpe, hp, STATUS_OK, Trials, partial, rand, space_eval
 from index_components import *
 
-# market = pd.read_csv("../data/cs_market.csv", parse_dates=["date"], dtype={"code": str})
-market = pd.read_csv("~/cs_market.csv", parse_dates=["date"], dtype={"code": str})
+market = pd.read_csv("../data/cs_market.csv", parse_dates=["date"], dtype={"code": str})
+# market = pd.read_csv("~/cs_market.csv", parse_dates=["date"], dtype={"code": str})
 # market = pd.read_csv("E:\market_data/cs_market.csv", parse_dates=["date"], dtype={"code": str})
 all_ohlcv = market.drop(["Unnamed: 0", "total_turnover", "limit_up", "limit_down"], axis=1)
 
@@ -32,7 +36,7 @@ for stk in flatten_stk_features_list.index.get_level_values('code').unique():
     new_stk_features = flatten_stk_features_list.loc[idx_slice[stk, :], idx_slice[:]]
     new_stk_features_list.append(new_stk_features)
 
-split_dates = ["2016-01-01", "2017-03-01"]
+split_dates = ["2015-07-01", "2017-03-01"]
 
 train_set, validate_set, test_set = split_data_set_by_date(new_stk_features_list, split_dates, minimum_size=128)
 
@@ -50,7 +54,8 @@ performance_measure = performance_factory(reverse_func,
 objective_func = construct_objective2(data_set, "logs", performance_measure, 'sharpe_ratio')
 
 trials = Trials()
-best = fmin(objective_func, space, algo=tpe.suggest, max_evals=100, trials=trials)
+
+best = fmin(objective_func, space, algo=tpe.suggest, max_evals=50, trials=trials)
 print(best)
 
 # params = space_eval(space, best)
