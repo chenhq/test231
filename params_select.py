@@ -10,14 +10,14 @@ import seaborn as snb
 snb.set()
 
 default_space = {
-    'time_steps': hp.choice('time_steps', [16, 32, 64, 128]),
-    'batch_size': hp.choice('batch_size', [2, 4, 8, 16, 32, 64, 128]),
-    'epochs': hp.choice('epochs', [100, 300, 500]),  # [100, 200, 500, 1000, 1500, 2000]
+    'time_steps': hp.choice('time_steps', [32, 64, 128]),
+    'batch_size': hp.choice('batch_size', [64, 128]),
+    'epochs': hp.choice('epochs', [100, 200, 300, 400, 500]),  # [100, 200, 500, 1000, 1500, 2000]
     'shuffle':  hp.choice('shuffle', [False, True]),
 
-    'units1': hp.choice('units1', [16, 32, 64, 128, 256]),
-    'units2': hp.choice('units2', [16, 32, 64, 128, 256]),
-    'units3': hp.choice('units3', [16, 32, 64, 128, 256]),
+    'units1': hp.choice('units1', [32, 64, 128, 256]),
+    'units2': hp.choice('units2', [32, 64, 128, 256]),
+    'units3': hp.choice('units3', [32, 64, 128, 256]),
 
     'is_BN_1': hp.choice('is_BN_1', [False, True]),
     'is_BN_2': hp.choice('is_BN_2', [False, True]),
@@ -27,7 +27,7 @@ default_space = {
     'dropout': hp.choice('dropout', [0, 0.1, 0.2, 0.3, 0.4, 0.5]),
     'recurrent_dropout': hp.choice('recurrent_dropout', [0, 0.1, 0.2, 0.3, 0.4, 0.5]),
     'initializer': hp.choice('initializer', [glorot_uniform(seed=123)]),
-    'min_delta': hp.quniform('min_delta', 0.0002, 0.001, 0.002),
+    'min_delta': hp.quniform('min_delta', 0.001, 0.005, 0.001),
     'patience': hp.quniform('patience', 10, 100, 10),
 }
 
@@ -58,7 +58,7 @@ default_space = {
 #             model.fit(X_train, Y_train,
 #                       batch_size=params['batch_size'],
 #                       epochs=params['epochs'],
-#                       verbose=0,
+#                       verbose=1,
 #                       validation_data=(X_validate, Y_validate),
 #                       shuffle=params['shuffle'],
 #                       callbacks=[log_histroy])
@@ -117,7 +117,7 @@ def construct_objective2(data_set, namespace, performance_func, measure):
         model.fit(X_train, Y_train,
                   batch_size=params['batch_size'],
                   epochs=params['epochs'],
-                  verbose=0,
+                  verbose=1,
                   validation_data=(X_validate, Y_validate),
                   shuffle=params['shuffle'],
                   callbacks=[log_histroy, early_stop])
