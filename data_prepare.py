@@ -2,8 +2,37 @@ import numpy as np
 import pandas as pd
 from talib.abstract import *
 import random
-import empyrical
 import multiprocessing
+from index_components import *
+
+
+def get_data():
+    global reverse_func, data_set
+    # market = pd.read_csv("../data/cs_market.csv", parse_dates=["date"], dtype={"code": str})
+    # market = pd.read_csv("~/cs_market.csv", parse_dates=["date"], dtype={"code": str})
+    market = pd.read_csv("E:\market_data/cs_market.csv", parse_dates=["date"], dtype={"code": str})
+    all_ohlcv = market.drop(["Unnamed: 0", "total_turnover", "limit_up", "limit_down"], axis=1)
+    all_ohlcv = all_ohlcv.set_index(['code', 'date']).sort_index()
+    idx_slice = pd.IndexSlice
+    stk_ohlcv_list = []
+    for stk in all_ohlcv.index.get_level_values('code').unique():
+        if stk in sz50:
+            stk_ohlcv = all_ohlcv.loc[idx_slice[stk, :], idx_slice[:]]
+            stk_ohlcv_list.append(stk_ohlcv)
+    stk_features_list = construct_features_for_stocks(stk_ohlcv_list, construct_features1)
+    flatten_stk_features_list, reverse_func = to_categorical(pd.concat(stk_features_list, axis=0), 'label',
+                                                             categorical_func_factory)
+    new_stk_features_list = []
+    for stk in flatten_stk_features_list.index.get_level_values('code').unique():
+        new_stk_features = flatten_stk_features_list.loc[idx_slice[stk, :], idx_slice[:]]
+        new_stk_features_list.append(new_stk_features)
+    split_dates = ["2016-01-01", "2017-01-01"]
+    train_set, validate_set, test_set = split_data_set_by_date(new_stk_features_list, split_dates, minimum_size=128)
+    train = pd.concat(train_set, axis=0)
+    validate = pd.concat(validate_set, axis=0)
+    test = pd.concat(test_set, axis=0)
+    data_set = {'train': train, 'validate': validate, 'test': test}
+    return data_set, reverse_func
 
 
 def construct_features(ohlcv, construct_features_func):
@@ -153,33 +182,4 @@ def reform_X_Y(data, timesteps, target_field='label'):
     Y = Y.reshape((-1, timesteps, Y.shape[1]))
     return X, Y
 
-
-# performance_score
-def performance_factory(reverse_func, performance_types=['returns']):
-    def performance_measures(pct_chg, y):
-        result = {}
-        y_init = list(map(reverse_func, y))
-        predict = pd.Series(index=pct_chg.index, data=y_init)
-        predict.name = 'label'
-        df = pd.concat([pct_chg, predict], axis=1)
-        df['return'] = 0
-        epsilon = 0.0001
-        long_cond = (abs(df['label'] - 2)) < epsilon
-        short_cond = (abs(df['label'])) < epsilon
-        df.loc[long_cond, 'return'] = pct_chg.loc[long_cond]/100.0
-        df.loc[short_cond, 'return'] = -pct_chg[short_cond]/100.0
-        returns = df['return']
-
-        if 'Y' in performance_types:
-            result['Y'] = predict
-        if 'returns' in performance_types:
-            result['returns'] = returns
-        if 'cum_returns' in performance_types:
-            result['cum_returns'] = empyrical.cum_returns(returns)
-        if 'annual_return' in performance_types:
-            result['annual_return'] = empyrical.annual_return(returns)
-        if 'sharpe_ratio' in performance_types:
-            result['sharpe_ratio'] = empyrical.sharpe_ratio(returns)
-        return result
-    return performance_measures
 
