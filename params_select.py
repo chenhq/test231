@@ -8,6 +8,7 @@ from objective import *
 from hyperopt import fmin, tpe, hp, STATUS_OK, Trials, partial, rand, space_eval
 import uuid
 import seaborn as snb
+from loss import *
 snb.set()
 try:
     import cPpickle as pickle
@@ -52,18 +53,10 @@ if __name__ == '__main__':
     namespace = function + '_' + id
     objective_func = construct_objective2(data_set, target_field='label', namespace=namespace,
                                           performance_func=performance_func, measure='sharpe_ratio',
-                                          include_test_data=True, shuffle_test=False)
+                                          include_test_data=True, shuffle_test=False, loss=weighted_loss)
 
     trials = Trials()
 
     best = fmin(objective_func, space, algo=tpe.suggest, max_evals=5, trials=trials)
     params = space_eval(space, best)
     print(params)
-
-
-
-
-
-
-
-

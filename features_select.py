@@ -45,10 +45,3 @@ if __name__ == '__main__':
             'units3': 32}
 
     objective_func(params)
-
-
-
-
-
-
-
