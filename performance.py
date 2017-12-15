@@ -8,7 +8,7 @@ def performance_factory(reverse_func, performance_types=['returns']):
         y_init = list(map(reverse_func, y))
         predict = pd.Series(index=pct_chg.index, data=y_init)
         predict.name = 'label'
-        df = pd.concat([pct_chg, predict], axis=1)
+        df = pd.concat([pct_chg, predict.shift(1)], axis=1)
         df['return'] = 0
         epsilon = 0.0001
         long_cond = (abs(df['label'] - 2)) < epsilon
