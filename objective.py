@@ -90,6 +90,12 @@ def construct_objective2(data_set, target_field, namespace, performance_func, me
             if tag == 'validate':
                 loss_value = -performances[measure]
 
+        # add for test reset_status
+        for tag in to_be_predict_set:
+            reset_status_tag = tag + '_reset_status'
+            model_predict(model, to_be_predict_set[tag][0], to_be_predict_set[tag][1],
+                                         reset_status_tag, log_dir, performance_func, reset_status=True)
+
         if shuffle_test:
             feature_columns = validate.columns.tolist()
             feature_columns.remove(target_field)
@@ -100,7 +106,8 @@ def construct_objective2(data_set, target_field, namespace, performance_func, me
                 X_validate_shuffle, Y_validate_shuffle = reform_X_Y(validate_shuffle, params['time_steps'],
                                                                     target_field)
                 tag = "shuffle_" + column
-                model_predict(model, validate_shuffle, X_validate_shuffle, tag, log_dir, performance_func)
+                model_predict(model, validate_shuffle, X_validate_shuffle, tag, log_dir,
+                              performance_func, predict_by_reset_status)
 
         print("identity: {0}, loss: {1}".format(identity, loss_value))
         return {'loss': loss_value, 'status': STATUS_OK}

@@ -27,7 +27,7 @@ if __name__ == '__main__':
     params = {
         'shuffle': False, 'initializer': glorot_uniform(seed=123), 'time_steps': 128, 'units2': 64,
         'is_BN_2': True, 'units1': 128, 'is_BN_1': False, 'lr': 0.0008180455150618453, 'dropout': 0,
-        'units3': 256, 'recurrent_dropout': 0.5, 'batch_size': 128, 'epochs': 100, 'is_BN_3': True}
+        'units3': 256, 'recurrent_dropout': 0.5, 'batch_size': 128, 'epochs': 10, 'is_BN_3': True}
 
     objective_func(params)
 

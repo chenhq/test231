@@ -7,10 +7,9 @@ from index_components import *
 
 
 def get_data():
-    global reverse_func, data_set
-    # market = pd.read_csv("../data/cs_market.csv", parse_dates=["date"], dtype={"code": str})
+    market = pd.read_csv("../data/cs_market.csv", parse_dates=["date"], dtype={"code": str})
     # market = pd.read_csv("~/cs_market.csv", parse_dates=["date"], dtype={"code": str})
-    market = pd.read_csv("E:\market_data/cs_market.csv", parse_dates=["date"], dtype={"code": str})
+    # market = pd.read_csv("E:\market_data/cs_market.csv", parse_dates=["date"], dtype={"code": str})
     all_ohlcv = market.drop(["Unnamed: 0", "total_turnover", "limit_up", "limit_down"], axis=1)
     all_ohlcv = all_ohlcv.set_index(['code', 'date']).sort_index()
     idx_slice = pd.IndexSlice
