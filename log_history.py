@@ -23,13 +23,14 @@ class LogHistory(keras.callbacks.Callback):
             os.makedirs(dirs)
         self.epoch_history_data.to_csv(self.filename)
 
-        if len(self.epoch_history_data) > 0:
-            history_plot_file = os.path.splitext(self.filename)[0]+'.png'
-            ax = self.epoch_history_data.plot()
-            fig = ax.get_figure()
-            plt.legend()
-            fig.savefig(history_plot_file)
-            plt.close()
+        # do not draw
+        # if len(self.epoch_history_data) > 0:
+        #     history_plot_file = os.path.splitext(self.filename)[0]+'.png'
+        #     ax = self.epoch_history_data.plot()
+        #     fig = ax.get_figure()
+        #     plt.legend()
+        #     fig.savefig(history_plot_file)
+        #     plt.close()
 
 
     # def on_batch_end(self, batch, logs={}):

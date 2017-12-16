@@ -19,7 +19,7 @@ except:
 if __name__ == '__main__':
 
     default_space = {
-        'time_steps': hp.choice('time_steps', [32, 64, 128]),
+        'time_steps': hp.choice('time_steps', [32, 64]),
         'batch_size': hp.choice('batch_size', [64, 128]),
         'epochs': hp.choice('epochs', [100, 200, 300, 400, 500]),  # [100, 200, 500, 1000, 1500, 2000]
         'shuffle': hp.choice('shuffle', [False, True]),
@@ -53,7 +53,8 @@ if __name__ == '__main__':
     namespace = function + '_' + id
     objective_func = construct_objective2(data_set, target_field='label', namespace=namespace,
                                           performance_func=performance_func, measure='sharpe_ratio',
-                                          include_test_data=True, shuffle_test=False, loss=weighted_loss)
+                                          include_test_data=True, shuffle_test=False,
+                                          loss=weighted_categorical_crossentropy)
 
     trials = Trials()
 

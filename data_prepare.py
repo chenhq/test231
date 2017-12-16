@@ -15,7 +15,7 @@ def get_data():
     idx_slice = pd.IndexSlice
     stk_ohlcv_list = []
     for stk in all_ohlcv.index.get_level_values('code').unique():
-        if stk in sz50:
+        if stk in zz500[:50]:
             stk_ohlcv = all_ohlcv.loc[idx_slice[stk, :], idx_slice[:]]
             stk_ohlcv_list.append(stk_ohlcv)
     stk_features_list = construct_features_for_stocks(stk_ohlcv_list, construct_features1)
@@ -26,7 +26,7 @@ def get_data():
         new_stk_features = flatten_stk_features_list.loc[idx_slice[stk, :], idx_slice[:]]
         new_stk_features_list.append(new_stk_features)
     split_dates = ["2016-01-01", "2017-01-01"]
-    train_set, validate_set, test_set = split_data_set_by_date(new_stk_features_list, split_dates, minimum_size=128)
+    train_set, validate_set, test_set = split_data_set_by_date(new_stk_features_list, split_dates, minimum_size=64)
     train = pd.concat(train_set, axis=0)
     validate = pd.concat(validate_set, axis=0)
     test = pd.concat(test_set, axis=0)
@@ -126,7 +126,7 @@ def split_data_by_sample(data, split_dict, minimum_size):
     return result
 
 
-def split_data_set_by_date(features_list, dates, minimum_size=128, processes=0):
+def split_data_set_by_date(features_list, dates, minimum_size=64, processes=0):
     if processes <= 0:
         processes = multiprocessing.cpu_count()
 
@@ -180,5 +180,3 @@ def reform_X_Y(data, timesteps, target_field='label'):
     Y = np.array([np.array(y) for y in Y0])
     Y = Y.reshape((-1, timesteps, Y.shape[1]))
     return X, Y
-
-

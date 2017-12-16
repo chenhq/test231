@@ -31,5 +31,5 @@ w_array = np.array(
      [2.0, 1.0, 2.0],
      [4.0, 2.0, 1.0]]
 )
-weighted_loss = partial(w_categorical_crossentropy, weights=w_array)
-weighted_loss.__name__ = 'w_categorical_crossentropy'
+weighted_categorical_crossentropy = partial(w_categorical_crossentropy, weights=w_array)
+weighted_categorical_crossentropy.__name__ = 'w_categorical_crossentropy'
