@@ -58,6 +58,6 @@ if __name__ == '__main__':
 
     trials = Trials()
 
-    best = fmin(objective_func, space, algo=tpe.suggest, max_evals=5, trials=trials)
+    best = fmin(objective_func, space, algo=tpe.suggest, max_evals=50, trials=trials)
     params = space_eval(space, best)
     print(params)
