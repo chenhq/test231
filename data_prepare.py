@@ -147,7 +147,7 @@ def split_data_set_by_date(features_list, dates, minimum_size=64, processes=0):
     return train_set, validate_set, test_set
 
 
-def split_data_by_date(data, dates, minimum_size):
+def split_data_by_date(data, dates, minimum_size=1):
     split_train_validate_date = dates[0]
     split_validate_test_date = dates[1]
 

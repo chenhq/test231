@@ -7,6 +7,7 @@ import empyrical
 import os
 from index_components import sz50, hs300, zz500
 import matplotlib.pylab as plt
+from data_prepare import  split_data_set_by_date
 
 try:
     import _pickle as pickle
@@ -20,18 +21,22 @@ absolute_spaces = {
     'return_per_count_threshold':
         hp.quniform('return_per_count_threshold', 0.001, 0.02, 0.001),
     'withdraw_threshold':
-        hp.quniform('withdraw_threshold', 0.005, 0.1, 0.005)
+        hp.quniform('withdraw_threshold', 0.005, 0.1, 0.005),
+    'minimum_period':
+        hp.uniform('minimum_period', 5, 20)
 }
 
 relative_spaces = {
     "window":
         hp.quniform('window', 4, 100, 2),
     'max_return_threshold':
-        hp.quniform('max_return_threshold', 2, 30, 1),
+        hp.quniform('max_return_threshold', 2, 6, 0.3),
     'return_per_count_threshold':
-        hp.quniform('return_per_count_threshold', 0.1, 5, 0.1),
+        hp.quniform('return_per_count_threshold', 0.1, 2, 0.1),
     'withdraw_threshold':
-        hp.quniform('withdraw_threshold', 0.5, 20, 0.5)
+        hp.quniform('withdraw_threshold', 0.5, 5, 0.1),
+    'minimum_period':
+        hp.uniform('minimum_period', 5, 20)
 }
 
 
@@ -68,12 +73,12 @@ def validate_wave_by_multi_processes(params, valide_wave_func, ohlcv_list, proce
         if valide_wave_func == tag_wave_direction_by_absolute:
             pool.apply_async(valide_wave_func, args=(
                 ohlcv, params['max_return_threshold'], params['return_per_count_threshold'],
-                params['withdraw_threshold'],),
+                params['withdraw_threshold'], params['minimum_period'], ),
                              callback=callback, error_callback=print_error)
         if valide_wave_func == tag_wave_direction_by_relative:
             pool.apply_async(valide_wave_func, args=(
                 ohlcv, params['window'], params['max_return_threshold'], params['return_per_count_threshold'],
-                params['withdraw_threshold'],),
+                params['withdraw_threshold'], params['minimum_period'], ),
                              callback=callback, error_callback=print_error)
 
     pool.close()
@@ -118,12 +123,14 @@ if __name__ == '__main__':
     # sub_dir = 'absolute'
 
     ohlcv_list = get_data()
+    split_dates = ["2016-01-01", "2017-01-01"]
+    train_set, validate_set, test_set = split_data_set_by_date(ohlcv_list, split_dates, minimum_size=1)
     log_dir = os.path.join('./valid_wave_hyperopt', sub_dir)
 
     if not os.path.isdir(log_dir):
         os.makedirs(log_dir)
 
-    hyperopt_objective = partial(objective, function=function, ohlcv_list=ohlcv_list, log_dir=log_dir)
+    hyperopt_objective = partial(objective, function=function, ohlcv_list=train_set, log_dir=log_dir)
     trials = Trials()
     best = fmin(hyperopt_objective, space, algo=tpe.suggest, max_evals=60, trials=trials)
     params = space_eval(space, best)

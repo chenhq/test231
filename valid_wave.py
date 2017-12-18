@@ -2,7 +2,8 @@ import numpy as np
 import matplotlib.pylab as plt
 
 
-def tag_wave_direction_by_absolute(ohlcv, max_return_threshold, return_per_count_threshold, withdraw_threshold):
+def tag_wave_direction_by_absolute(ohlcv, max_return_threshold, return_per_count_threshold,
+                                   withdraw_threshold, minimum_period):
     ohlcv['pct_chg'] = (ohlcv['close'] / ohlcv['close'].shift(1) - 1).fillna(0)
     ohlcv['direction'] = np.nan
     i = 0
@@ -58,28 +59,34 @@ def tag_wave_direction_by_absolute(ohlcv, max_return_threshold, return_per_count
                 # 波段太小，未满足max_return_threshold
                 if max_return < max_return_threshold:
                     i += 1
-                    break
                 else:
-                    # 符合条件的波段
-                    # 标记[i, max_return_pos]的direction标签
-                    for k in range(i, max_return_pos + 1):
-                        ohlcv.loc[ohlcv.index[k], 'direction'] = direction
-                    i = max_return_pos + 1
-                    break
+                    # 是否满足minimum period
+                    if max_return_pos - i < minimum_period:
+                        i += 1
+                    else:
+                        # 符合条件的波段
+                        # 标记[i, max_return_pos]的direction标签
+                        for k in range(i, j + 1):
+                            ohlcv.loc[ohlcv.index[k], 'direction'] = direction
+                        i = j + 1
+                break
 
             # 波段因为最大回撤结束
             if withdraw > withdraw_threshold:
                 # 波段太小，未满足max_return_threshold
                 if max_return < max_return_threshold:
                     i += 1
-                    break
                 else:
-                    # 符合条件的波段
-                    # 标记[i, max_return_pos]的direction标签
-                    for k in range(i, max_return_pos + 1):
-                        ohlcv.loc[ohlcv.index[k], 'direction'] = direction
-                    i = max_return_pos + 1
-                    break
+                    # 是否满足minimum period
+                    if max_return_pos - i < minimum_period:
+                        i += 1
+                    else:
+                        # 符合条件的波段
+                        # 标记[i, max_return_pos]的direction标签
+                        for k in range(i, j + 1):
+                            ohlcv.loc[ohlcv.index[k], 'direction'] = direction
+                        i = j + 1
+                break
 
             j += 1
             if j >= len(ohlcv):
@@ -95,7 +102,8 @@ def tag_wave_direction_by_absolute(ohlcv, max_return_threshold, return_per_count
     return ohlcv
 
 
-def tag_wave_direction_by_relative(ohlcv, window, max_return_threshold, return_per_count_threshold, withdraw_threshold):
+def tag_wave_direction_by_relative(ohlcv, window, max_return_threshold, return_per_count_threshold,
+                                   withdraw_threshold, minimum_period):
     ohlcv['pct_chg'] = (ohlcv['close'] / ohlcv['close'].shift(1) - 1).fillna(0)
     ohlcv['std'] = ohlcv['pct_chg'].rolling(int(window)).std().bfill(0)
     ohlcv['direction'] = np.nan
@@ -147,33 +155,39 @@ def tag_wave_direction_by_relative(ohlcv, window, max_return_threshold, return_p
                 withdraw = (new_price - min_price) / price
                 max_return_pos = argmin
 
-            # 波段趋势太小，未满足return_per_count_threshold
+            # 波段趋势太小，未继续满足return_per_count_threshold
             if return_per_count < return_per_count_threshold * ohlcv.iloc[j]['std']:
                 # 波段太小，未满足max_return_threshold
                 if max_return < max_return_threshold * ohlcv.iloc[j]['std']:
                     i += 1
-                    break
                 else:
-                    # 符合条件的波段
-                    # 标记[i, max_return_pos]的direction标签
-                    for k in range(i, max_return_pos + 1):
-                        ohlcv.loc[ohlcv.index[k], 'direction'] = direction
-                    i = max_return_pos + 1
-                    break
+                    # 是否满足minimum period
+                    if max_return_pos - i < minimum_period:
+                        i += 1
+                    else:
+                        # 符合条件的波段
+                        # 标记[i, max_return_pos]的direction标签
+                        for k in range(i, j + 1):
+                            ohlcv.loc[ohlcv.index[k], 'direction'] = direction
+                        i = j + 1
+                break
 
             # 波段因为最大回撤结束
             if withdraw > withdraw_threshold * ohlcv.iloc[j]['std']:
                 # 波段太小，未满足max_return_threshold
                 if max_return < max_return_threshold * ohlcv.iloc[j]['std']:
                     i += 1
-                    break
                 else:
-                    # 符合条件的波段
-                    # 标记[i, max_return_pos]的direction标签
-                    for k in range(i, max_return_pos + 1):
-                        ohlcv.loc[ohlcv.index[k], 'direction'] = direction
-                    i = max_return_pos + 1
-                    break
+                    # 是否满足minimum period
+                    if max_return_pos - i < minimum_period:
+                        i += 1
+                    else:
+                        # 符合条件的波段
+                        # 标记[i, max_return_pos]的direction标签
+                        for k in range(i, j + 1):
+                            ohlcv.loc[ohlcv.index[k], 'direction'] = direction
+                        i = j + 1
+                break
             j += 1
             if j >= len(ohlcv):
                 i += 1
