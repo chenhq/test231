@@ -1,8 +1,9 @@
 import numpy as np
+import matplotlib.pylab as plt
 
 
 def tag_wave_direction_by_absolute(ohlcv, max_return_threshold, return_per_count_threshold, withdraw_threshold):
-    ohlcv['pct_chg'] = (ohlcv['close'] / ohlcv['close'].shift(-1) - 1).fillna(0)
+    ohlcv['pct_chg'] = (ohlcv['close'] / ohlcv['close'].shift(1) - 1).fillna(0)
     ohlcv['direction'] = np.nan
     i = 0
     while i < len(ohlcv):
@@ -83,13 +84,22 @@ def tag_wave_direction_by_absolute(ohlcv, max_return_threshold, return_per_count
             j += 1
             if j >= len(ohlcv):
                 i += 1
+    # # show
+    # result = ohlcv.reset_index().reset_index()
+    # fig, ax = plt.subplots(1, figsize=(21, 7))
+    # result.plot(x='index', y='close', figsize=(21, 7), ax=ax)
+    # result[result['direction'] > 0].plot.scatter(x='index', y='close', s=10, c='r', figsize=(21, 7), ax=ax)
+    # result[result['direction'] < 0].plot.scatter(x='index', y='close', s=10, c='g', figsize=(21, 7), ax=ax)
+    # result[np.isnan(result['direction'])].plot.scatter(x='index', y='close', s=10, c='b', figsize=(21, 7), ax=ax)
+    # plt.show()
     return ohlcv
 
 
 def tag_wave_direction_by_relative(ohlcv, window, max_return_threshold, return_per_count_threshold, withdraw_threshold):
-    ohlcv['pct_chg'] = (ohlcv['close'] / ohlcv['close'].shift(-1) - 1).fillna(0)
+    ohlcv['pct_chg'] = (ohlcv['close'] / ohlcv['close'].shift(1) - 1).fillna(0)
     ohlcv['std'] = ohlcv['pct_chg'].rolling(int(window)).std().bfill(0)
     ohlcv['direction'] = np.nan
+    print(ohlcv)
     i = 0
     while i < len(ohlcv):
         # 波段的周期数量
@@ -168,4 +178,12 @@ def tag_wave_direction_by_relative(ohlcv, window, max_return_threshold, return_p
             j += 1
             if j >= len(ohlcv):
                 i += 1
+    # # show
+    # result = ohlcv.reset_index().reset_index()
+    # fig, ax = plt.subplots(1, figsize=(21, 7))
+    # result.plot(x='index', y='close', figsize=(21, 7), ax=ax)
+    # result[result['direction'] > 0].plot.scatter(x='index', y='close', s=10, c='r', figsize=(21, 7), ax=ax)
+    # result[result['direction'] < 0].plot.scatter(x='index', y='close', s=10, c='g', figsize=(21, 7), ax=ax)
+    # result[np.isnan(result['direction'])].plot.scatter(x='index', y='close', s=10, c='b', figsize=(21, 7), ax=ax)
+    # plt.show()
     return ohlcv
