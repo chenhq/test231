@@ -5,6 +5,7 @@ from valid_wave import *
 import uuid
 import empyrical
 import os
+from index_components import sz50, hs300, zz500
 
 try:
     import _pickle as pickle
@@ -42,8 +43,9 @@ def get_data():
     idx_slice = pd.IndexSlice
     stk_ohlcv_list = []
     for stk in all_ohlcv.index.get_level_values('code').unique():
-        stk_ohlcv = all_ohlcv.loc[idx_slice[stk, :], idx_slice[:]]
-        stk_ohlcv_list.append(stk_ohlcv)
+        if stk in sz50:
+            stk_ohlcv = all_ohlcv.loc[idx_slice[stk, :], idx_slice[:]]
+            stk_ohlcv_list.append(stk_ohlcv)
     return stk_ohlcv_list
 
 
