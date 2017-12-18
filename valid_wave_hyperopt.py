@@ -94,6 +94,8 @@ def objective(params, function, ohlcv_list, log_dir):
 
     annual_return = empyrical.annual_return(returns)
     sharpe_ratio = empyrical.sharpe_ratio(returns)
+    if np.isnan(sharpe_ratio):
+        sharpe_ratio = 0
 
     data = {'id': identity, 'returns': returns,
             'annual_return': annual_return,
