@@ -35,8 +35,8 @@ relative_spaces = {
 
 def get_data():
     # market = pd.read_csv("../data/cs_market.csv", parse_dates=["date"], dtype={"code": str})
-    market = pd.read_csv("~/cs_market.csv", parse_dates=["date"], dtype={"code": str})
-    # market = pd.read_csv("E:\market_data/cs_market.csv", parse_dates=["date"], dtype={"code": str})
+    # market = pd.read_csv("~/cs_market.csv", parse_dates=["date"], dtype={"code": str})
+    market = pd.read_csv("E:\market_data/cs_market.csv", parse_dates=["date"], dtype={"code": str})
     all_ohlcv = market.drop(["Unnamed: 0", "total_turnover", "limit_up", "limit_down"], axis=1)
     all_ohlcv = all_ohlcv.set_index(['code', 'date']).sort_index()
     idx_slice = pd.IndexSlice
@@ -82,8 +82,16 @@ def objective(params, function, ohlcv_list, log_dir):
     print(params)
     identity = str(uuid.uuid1())
     result_list = validate_wave_by_multi_processes(params, function, ohlcv_list)
-    returns_list = [(x['direction'] * x['pct_chg']) for x in result_list]
+    print(len(result_list))
+    returns_list = []
+    for result in result_list:
+        stk_returns = result['pct_chg'] * result['direction']
+        stk_returns = stk_returns.fillna(0)
+        print("stk returns:")
+        print(stk_returns)
+        returns_list.append(stk_returns)
     returns = pd.concat(returns_list, axis=0)
+    print(returns)
 
     annual_return = empyrical.annual_return(returns)
     sharpe_ratio = empyrical.sharpe_ratio(returns)
@@ -99,22 +107,23 @@ def objective(params, function, ohlcv_list, log_dir):
     return {'loss': -sharpe_ratio, 'status': STATUS_OK}
 
 
-function =tag_wave_direction_by_relative
-space = relative_spaces
-sub_dir = 'relative'
+if __name__ == '__main__':
+    function = tag_wave_direction_by_relative
+    space = relative_spaces
+    sub_dir = 'relative'
 
-# function = tag_wave_direction_by_absolute()
-# space = absolute_spaces
-# sub_dir = 'absolute'
+    # function = tag_wave_direction_by_absolute()
+    # space = absolute_spaces
+    # sub_dir = 'absolute'
 
-ohlcv_list = get_data()
-log_dir = os.path.join('./valid_wave_hyperopt', sub_dir)
+    ohlcv_list = get_data()
+    log_dir = os.path.join('./valid_wave_hyperopt', sub_dir)
 
-if not os.path.isdir(log_dir):
-    os.makedirs(log_dir)
+    if not os.path.isdir(log_dir):
+        os.makedirs(log_dir)
 
-hyperopt_objective = partial(objective, function=function, ohlcv_list=ohlcv_list, log_dir=log_dir)
-trials = Trials()
-best = fmin(hyperopt_objective, space, algo=tpe.suggest, max_evals=60, trials=trials)
-params = space_eval(space, best)
-print(params)
+    hyperopt_objective = partial(objective, function=function, ohlcv_list=ohlcv_list, log_dir=log_dir)
+    trials = Trials()
+    best = fmin(hyperopt_objective, space, algo=tpe.suggest, max_evals=60, trials=trials)
+    params = space_eval(space, best)
+    print(params)
