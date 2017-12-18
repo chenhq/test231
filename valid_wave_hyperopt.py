@@ -89,11 +89,8 @@ def objective(params, function, ohlcv_list, log_dir):
     for result in result_list:
         stk_returns = result['pct_chg'] * result['direction']
         stk_returns = stk_returns.fillna(0)
-        print("stk returns:")
-        print(stk_returns)
         returns_list.append(stk_returns)
     returns = pd.concat(returns_list, axis=0)
-    print(returns)
 
     annual_return = empyrical.annual_return(returns)
     sharpe_ratio = empyrical.sharpe_ratio(returns)
@@ -102,7 +99,7 @@ def objective(params, function, ohlcv_list, log_dir):
             'annual_return': annual_return,
             'sharpe_ratio': sharpe_ratio}
 
-    with open(os.path.join(log_dir, identity + '.pkl'), 'rb') as f:
+    with open(os.path.join(log_dir, identity + '.pkl'), 'wb') as f:
         pickle.dump(data, f)
 
     print('id: %s, annual_return: %s, sharpe_ratio: %s' % (identity, annual_return, sharpe_ratio))
