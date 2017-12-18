@@ -99,7 +99,6 @@ def tag_wave_direction_by_relative(ohlcv, window, max_return_threshold, return_p
     ohlcv['pct_chg'] = (ohlcv['close'] / ohlcv['close'].shift(1) - 1).fillna(0)
     ohlcv['std'] = ohlcv['pct_chg'].rolling(int(window)).std().bfill(0)
     ohlcv['direction'] = np.nan
-    print(ohlcv)
     i = 0
     while i < len(ohlcv):
         # 波段的周期数量

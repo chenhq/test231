@@ -37,8 +37,8 @@ relative_spaces = {
 
 def get_data():
     # market = pd.read_csv("../data/cs_market.csv", parse_dates=["date"], dtype={"code": str})
-    # market = pd.read_csv("~/cs_market.csv", parse_dates=["date"], dtype={"code": str})
-    market = pd.read_csv("E:\market_data/cs_market.csv", parse_dates=["date"], dtype={"code": str})
+    market = pd.read_csv("~/cs_market.csv", parse_dates=["date"], dtype={"code": str})
+    # market = pd.read_csv("E:\market_data/cs_market.csv", parse_dates=["date"], dtype={"code": str})
     all_ohlcv = market.drop(["Unnamed: 0", "total_turnover", "limit_up", "limit_down"], axis=1)
     all_ohlcv = all_ohlcv.set_index(['code', 'date']).sort_index()
     idx_slice = pd.IndexSlice
@@ -89,8 +89,6 @@ def objective(params, function, ohlcv_list, log_dir):
     for result in result_list:
         stk_returns = result['pct_chg'] * result['direction']
         stk_returns = stk_returns.fillna(0)
-        (stk_returns + 1).cumprod().plot(figsize=(21, 7))
-        plt.show()
         returns_list.append(stk_returns)
     returns = pd.concat(returns_list, axis=0)
 
@@ -124,15 +122,15 @@ if __name__ == '__main__':
         os.makedirs(log_dir)
 
     hyperopt_objective = partial(objective, function=function, ohlcv_list=ohlcv_list, log_dir=log_dir)
-    # trials = Trials()
-    # best = fmin(hyperopt_objective, space, algo=tpe.suggest, max_evals=60, trials=trials)
-    # params = space_eval(space, best)
-    # print(params)
+    trials = Trials()
+    best = fmin(hyperopt_objective, space, algo=tpe.suggest, max_evals=60, trials=trials)
+    params = space_eval(space, best)
+    print(params)
 
-    params = {
-        'window': 30,
-        'max_return_threshold': 5,
-        'return_per_count_threshold': 0.02,
-        'withdraw_threshold': 3}
-
-    hyperopt_objective(params)
+    # params = {
+    #     'window': 30,
+    #     'max_return_threshold': 5,
+    #     'return_per_count_threshold': 0.02,
+    #     'withdraw_threshold': 3}
+    #
+    # hyperopt_objective(params)
