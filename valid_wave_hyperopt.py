@@ -134,14 +134,15 @@ if __name__ == '__main__':
 
     hyperopt_objective = partial(objective, ohlcv_list=train_set, operation='search', mode='relative', log_dir=log_dir)
     trials = Trials()
-    best = fmin(hyperopt_objective, space, algo=tpe.suggest, max_evals=60, trials=trials)
-    params = space_eval(space, best)
-    print(params)
+    # best = fmin(hyperopt_objective, space, algo=tpe.suggest, max_evals=60, trials=trials)
+    # params = space_eval(space, best)
+    # print(params)
 
-    # params = {
-    #     'window': 30,
-    #     'max_return_threshold': 5,
-    #     'return_per_count_threshold': 0.02,
-    #     'withdraw_threshold': 3}
-    #
-    # hyperopt_objective(params)
+    best_params = {
+        'minimum_period': 12.135881002390583,
+        'std_window': 10.0,
+        'withdraw_threshold': 2.0,
+        'max_return_threshold': 1.0,
+        'return_per_count_threshold': 1.0}
+
+    hyperopt_objective(best_params)

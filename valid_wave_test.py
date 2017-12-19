@@ -15,13 +15,20 @@ if __name__ == '__main__':
     #     'minimum_period': 10.43056594800402
     # }
 
+    # best_params = {
+    #     'minimum_period': 9.389675833299252,
+    #     'std_window': 20.0,
+    #     'withdraw_threshold': 5.0,
+    #     'max_return_threshold': 1.5,
+    #     'return_per_count_threshold': 0.5
+    # }
+
     best_params = {
-        'return_per_count_threshold': 0.9,
-        'withdraw_threshold': 3.5,
-        'minimum_period': 17.15508685266345,
+        'minimum_period': 12.135881002390583,
+        'std_window': 10.0,
+        'withdraw_threshold': 2.0,
         'max_return_threshold': 1.0,
-        'std_window': 35.0
-    }
+        'return_per_count_threshold': 1.0}
     sub_dir = 'relative'
 
     # function = tag_wave_direction_by_absolute()
