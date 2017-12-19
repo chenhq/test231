@@ -1,13 +1,14 @@
-from hyperopt import fmin, tpe, hp, STATUS_OK, Trials, partial, rand, space_eval
-import pandas as pd
 import multiprocessing
-from valid_wave import *
-import uuid
-import empyrical
 import os
-from index_components import sz50, hs300, zz500
-import matplotlib.pylab as plt
+import uuid
+
+import empyrical
+import pandas as pd
+from hyperopt import fmin, tpe, hp, STATUS_OK, Trials, space_eval
+
 from data_prepare import  split_data_set_by_date
+from index_components import zz500
+from valid_wave import *
 
 try:
     import _pickle as pickle
@@ -40,22 +41,22 @@ relative_spaces = {
 }
 
 
-def get_data():
+def get_data(stk_list):
     # market = pd.read_csv("../data/cs_market.csv", parse_dates=["date"], dtype={"code": str})
-    market = pd.read_csv("~/cs_market.csv", parse_dates=["date"], dtype={"code": str})
-    # market = pd.read_csv("E:\market_data/cs_market.csv", parse_dates=["date"], dtype={"code": str})
+    # market = pd.read_csv("~/cs_market.csv", parse_dates=["date"], dtype={"code": str})
+    market = pd.read_csv("E:\market_data/cs_market.csv", parse_dates=["date"], dtype={"code": str})
     all_ohlcv = market.drop(["Unnamed: 0", "total_turnover", "limit_up", "limit_down"], axis=1)
     all_ohlcv = all_ohlcv.set_index(['code', 'date']).sort_index()
     idx_slice = pd.IndexSlice
     stk_ohlcv_list = []
     for stk in all_ohlcv.index.get_level_values('code').unique():
-        if stk in sz50:
+        if stk in stk_list:
             stk_ohlcv = all_ohlcv.loc[idx_slice[stk, :], idx_slice[:]]
             stk_ohlcv_list.append(stk_ohlcv)
     return stk_ohlcv_list
 
 
-def validate_wave_by_multi_processes(params, valide_wave_func, ohlcv_list, processes=0):
+def valid_wave_by_multi_processes(params, ohlcv_list, operation, mode, processes=0):
     stk_result_list = []
 
     if processes <= 0:
@@ -70,26 +71,24 @@ def validate_wave_by_multi_processes(params, valide_wave_func, ohlcv_list, proce
         print(err)
 
     for ohlcv in ohlcv_list:
-        if valide_wave_func == tag_wave_direction_by_absolute:
-            pool.apply_async(valide_wave_func, args=(
-                ohlcv, params['max_return_threshold'], params['return_per_count_threshold'],
-                params['withdraw_threshold'], params['minimum_period'], ),
-                             callback=callback, error_callback=print_error)
-        if valide_wave_func == tag_wave_direction_by_relative:
-            pool.apply_async(valide_wave_func, args=(
-                ohlcv, params['std_window'], params['max_return_threshold'], params['return_per_count_threshold'],
-                params['withdraw_threshold'], params['minimum_period'], ),
-                             callback=callback, error_callback=print_error)
+        if 'std_window' in params:
+            std_window = params['std_window']
+        else:
+            std_window = 0
+        pool.apply_async(tag_wave_direction, args=(
+            ohlcv, params['max_return_threshold'], params['return_per_count_threshold'],
+            params['withdraw_threshold'], params['minimum_period'], operation, mode, std_window,),
+                         callback=callback, error_callback=print_error)
 
     pool.close()
     pool.join()
     return stk_result_list
 
 
-def objective(params, function, ohlcv_list, log_dir):
+def objective(params, ohlcv_list, operation, mode, log_dir):
     print(params)
     identity = str(uuid.uuid1())
-    result_list = validate_wave_by_multi_processes(params, function, ohlcv_list)
+    result_list = valid_wave_by_multi_processes(params, ohlcv_list, operation, mode)
     returns_list = []
     for result in result_list:
         stk_returns = result['pct_chg'] * result['direction']
@@ -118,7 +117,6 @@ def objective(params, function, ohlcv_list, log_dir):
 
 
 if __name__ == '__main__':
-    function = tag_wave_direction_by_relative
     space = relative_spaces
     sub_dir = 'relative'
 
@@ -126,7 +124,7 @@ if __name__ == '__main__':
     # space = absolute_spaces
     # sub_dir = 'absolute'
 
-    ohlcv_list = get_data()
+    ohlcv_list = get_data(zz500[:50])
     split_dates = ["2016-01-01", "2017-01-01"]
     train_set, validate_set, test_set = split_data_set_by_date(ohlcv_list, split_dates, minimum_size=1)
     log_dir = os.path.join('./valid_wave_hyperopt', sub_dir)
@@ -134,7 +132,7 @@ if __name__ == '__main__':
     if not os.path.isdir(log_dir):
         os.makedirs(log_dir)
 
-    hyperopt_objective = partial(objective, function=function, ohlcv_list=train_set, log_dir=log_dir)
+    hyperopt_objective = partial(objective, ohlcv_list=train_set, operation='search', mode='relative', log_dir=log_dir)
     trials = Trials()
     best = fmin(hyperopt_objective, space, algo=tpe.suggest, max_evals=60, trials=trials)
     params = space_eval(space, best)
