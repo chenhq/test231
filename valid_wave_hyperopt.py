@@ -37,14 +37,14 @@ relative_spaces = {
     'withdraw_threshold':
         hp.quniform('withdraw_threshold', 0.5, 5, 0.5),
     'minimum_period':
-        hp.uniform('minimum_period', 10, 20)
+        hp.uniform('minimum_period', 5, 20)
 }
 
 
 def get_data(stk_list):
     # market = pd.read_csv("../data/cs_market.csv", parse_dates=["date"], dtype={"code": str})
-    # market = pd.read_csv("~/cs_market.csv", parse_dates=["date"], dtype={"code": str})
-    market = pd.read_csv("E:\market_data/cs_market.csv", parse_dates=["date"], dtype={"code": str})
+    market = pd.read_csv("~/cs_market.csv", parse_dates=["date"], dtype={"code": str})
+    # market = pd.read_csv("E:\market_data/cs_market.csv", parse_dates=["date"], dtype={"code": str})
     all_ohlcv = market.drop(["Unnamed: 0", "total_turnover", "limit_up", "limit_down"], axis=1)
     all_ohlcv = all_ohlcv.set_index(['code', 'date']).sort_index()
     idx_slice = pd.IndexSlice

@@ -7,12 +7,20 @@ from data_prepare import split_data_set_by_date
 
 if __name__ == '__main__':
     function = tag_wave_direction
+    # best_params = {
+    #     'return_per_count_threshold': 0.30000000000000004,
+    #     'max_return_threshold': 5.0,
+    #     'withdraw_threshold': 4.0,
+    #     'std_window': 10.0,
+    #     'minimum_period': 10.43056594800402
+    # }
+
     best_params = {
-        'return_per_count_threshold': 0.30000000000000004,
-        'max_return_threshold': 5.0,
-        'withdraw_threshold': 4.0,
-        'std_window': 10.0,
-        'minimum_period': 10.43056594800402
+        'return_per_count_threshold': 0.9,
+        'withdraw_threshold': 3.5,
+        'minimum_period': 17.15508685266345,
+        'max_return_threshold': 1.0,
+        'std_window': 35.0
     }
     sub_dir = 'relative'
 

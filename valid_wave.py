@@ -81,7 +81,7 @@ def tag_wave_direction(ohlcv, max_return_threshold, return_per_count_threshold, 
                     # 标记[i, wave_end_pos]的direction标签
                     for k in range(i, wave_end_pos + 1):
                         ohlcv.loc[ohlcv.index[k], 'direction'] = direction
-                i += 1
+                i = wave_end_pos + 1
                 break
 
             # 波段因为最大回撤结束
@@ -99,7 +99,7 @@ def tag_wave_direction(ohlcv, max_return_threshold, return_per_count_threshold, 
                     # 标记[i, wave_end_pos]的direction标签
                     for k in range(i, wave_end_pos + 1):
                         ohlcv.loc[ohlcv.index[k], 'direction'] = direction
-                i = max(wave_end_pos, i+1)
+                i = max(wave_end_pos+1, i+1)
                 break
             j += 1
             if j >= len(ohlcv):
