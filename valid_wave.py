@@ -102,10 +102,10 @@ def tag_wave_direction_by_absolute(ohlcv, max_return_threshold, return_per_count
     return ohlcv
 
 
-def tag_wave_direction_by_relative(ohlcv, window, max_return_threshold, return_per_count_threshold,
+def tag_wave_direction_by_relative(ohlcv, std_window, max_return_threshold, return_per_count_threshold,
                                    withdraw_threshold, minimum_period):
     ohlcv['pct_chg'] = (ohlcv['close'] / ohlcv['close'].shift(1) - 1).fillna(0)
-    ohlcv['std'] = ohlcv['pct_chg'].rolling(int(window)).std().bfill(0)
+    ohlcv['std'] = ohlcv['pct_chg'].rolling(int(std_window)).std().bfill(0)
     ohlcv['direction'] = np.nan
     i = 0
     while i < len(ohlcv):

@@ -27,16 +27,16 @@ absolute_spaces = {
 }
 
 relative_spaces = {
-    "window":
-        hp.quniform('window', 4, 100, 2),
+    'std_window':
+        hp.quniform('window', 10, 60, 5),
     'max_return_threshold':
-        hp.quniform('max_return_threshold', 2, 6, 0.3),
+        hp.quniform('max_return_threshold', 1.0, 8.0, 0.5),
     'return_per_count_threshold':
-        hp.quniform('return_per_count_threshold', 0.1, 2, 0.1),
+        hp.quniform('return_per_count_threshold', 0.1, 1.0, 0.1),
     'withdraw_threshold':
-        hp.quniform('withdraw_threshold', 0.5, 5, 0.1),
+        hp.quniform('withdraw_threshold', 0.5, 5, 0.5),
     'minimum_period':
-        hp.uniform('minimum_period', 5, 20)
+        hp.uniform('minimum_period', 10, 20)
 }
 
 
@@ -77,7 +77,7 @@ def validate_wave_by_multi_processes(params, valide_wave_func, ohlcv_list, proce
                              callback=callback, error_callback=print_error)
         if valide_wave_func == tag_wave_direction_by_relative:
             pool.apply_async(valide_wave_func, args=(
-                ohlcv, params['window'], params['max_return_threshold'], params['return_per_count_threshold'],
+                ohlcv, params['std_window'], params['max_return_threshold'], params['return_per_count_threshold'],
                 params['withdraw_threshold'], params['minimum_period'], ),
                              callback=callback, error_callback=print_error)
 
@@ -102,9 +102,13 @@ def objective(params, function, ohlcv_list, log_dir):
     if np.isnan(sharpe_ratio):
         sharpe_ratio = 0
 
-    data = {'id': identity, 'returns': returns,
-            'annual_return': annual_return,
-            'sharpe_ratio': sharpe_ratio}
+    data = {
+        'id': identity,
+        'params': params,
+        'returns': returns,
+        'annual_return': annual_return,
+        'sharpe_ratio': sharpe_ratio
+    }
 
     with open(os.path.join(log_dir, identity + '.pkl'), 'wb') as f:
         pickle.dump(data, f)
