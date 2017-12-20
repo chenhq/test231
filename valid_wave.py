@@ -70,7 +70,7 @@ def tag_wave_direction(ohlcv, max_return_threshold, return_per_count_threshold, 
             if return_per_count < return_per_count_threshold_:
                 wave_end_pos = i
                 # 波段满足max_return_threshold or minimum period
-                if max_return > max_return_threshold_ or max_return_pos - i >= minimum_period:
+                if max_return > max_return_threshold_ or max_return_pos - i - 1 >= minimum_period:
                     # 确定最后的标签位置
                     if operation == 'search':
                         wave_end_pos = j
@@ -79,7 +79,7 @@ def tag_wave_direction(ohlcv, max_return_threshold, return_per_count_threshold, 
 
                     # 符合条件的波段
                     # 标记[i, wave_end_pos]的direction标签
-                    for k in range(i, wave_end_pos + 1):
+                    for k in range(i+1, wave_end_pos + 1):
                         ohlcv.loc[ohlcv.index[k], 'direction'] = direction
                 i = wave_end_pos + 1
                 break
@@ -88,7 +88,7 @@ def tag_wave_direction(ohlcv, max_return_threshold, return_per_count_threshold, 
             if withdraw > withdraw_threshold_:
                 wave_end_pos = i
                 # 满足max_return_threshold or minimum period
-                if max_return > max_return_threshold_ or max_return_pos - i >= minimum_period:
+                if max_return > max_return_threshold_ or max_return_pos - i - 1 >= minimum_period:
                     # 确定最后的标签位置
                     if operation == 'search':
                         wave_end_pos = j
@@ -97,9 +97,9 @@ def tag_wave_direction(ohlcv, max_return_threshold, return_per_count_threshold, 
 
                     # 符合条件的波段
                     # 标记[i, wave_end_pos]的direction标签
-                    for k in range(i, wave_end_pos + 1):
+                    for k in range(i+1, wave_end_pos + 1):
                         ohlcv.loc[ohlcv.index[k], 'direction'] = direction
-                i = max(wave_end_pos+1, i+1)
+                i = wave_end_pos + 1
                 break
             j += 1
             if j >= len(ohlcv):

@@ -43,8 +43,8 @@ relative_spaces = {
 
 def get_data(stk_list):
     # market = pd.read_csv("../data/cs_market.csv", parse_dates=["date"], dtype={"code": str})
-    market = pd.read_csv("~/cs_market.csv", parse_dates=["date"], dtype={"code": str})
-    # market = pd.read_csv("E:\market_data/cs_market.csv", parse_dates=["date"], dtype={"code": str})
+    # market = pd.read_csv("~/cs_market.csv", parse_dates=["date"], dtype={"code": str})
+    market = pd.read_csv("E:\market_data/cs_market.csv", parse_dates=["date"], dtype={"code": str})
     all_ohlcv = market.drop(["Unnamed: 0", "total_turnover", "limit_up", "limit_down"], axis=1)
     all_ohlcv = all_ohlcv.set_index(['code', 'date']).sort_index()
     idx_slice = pd.IndexSlice
@@ -106,7 +106,8 @@ def objective(params, ohlcv_list, operation, mode, log_dir):
         'params': params,
         'returns': returns,
         'annual_return': annual_return,
-        'sharpe_ratio': sharpe_ratio
+        'sharpe_ratio': sharpe_ratio,
+        'result_list': result_list
     }
 
     with open(os.path.join(log_dir, identity + '.pkl'), 'wb') as f:
@@ -132,7 +133,7 @@ if __name__ == '__main__':
     if not os.path.isdir(log_dir):
         os.makedirs(log_dir)
 
-    hyperopt_objective = partial(objective, ohlcv_list=train_set, operation='search', mode='relative', log_dir=log_dir)
+    hyperopt_objective = partial(objective, ohlcv_list=test_set, operation='search', mode='relative', log_dir=log_dir)
     trials = Trials()
     # best = fmin(hyperopt_objective, space, algo=tpe.suggest, max_evals=60, trials=trials)
     # params = space_eval(space, best)
