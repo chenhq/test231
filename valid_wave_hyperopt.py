@@ -6,7 +6,7 @@ import empyrical
 import pandas as pd
 from hyperopt import fmin, tpe, hp, STATUS_OK, Trials, space_eval
 
-from data_prepare import  split_data_set_by_date
+from data_prepare import split_data_set_by_date
 from index_components import zz500
 from valid_wave import *
 
@@ -31,9 +31,9 @@ relative_spaces = {
     'std_window':
         hp.quniform('window', 10, 60, 5),
     'max_return_threshold':
-        hp.quniform('max_return_threshold', 1.0, 8.0, 0.5),
+        hp.quniform('max_return_threshold', 5.0, 8.0, 0.5),
     'return_per_count_threshold':
-        hp.quniform('return_per_count_threshold', 0.1, 1.0, 0.1),
+        hp.quniform('return_per_count_threshold', 0.3, 1.0, 0.1),
     'withdraw_threshold':
         hp.quniform('withdraw_threshold', 0.5, 5, 0.5),
     'minimum_period':
@@ -125,7 +125,7 @@ if __name__ == '__main__':
     # space = absolute_spaces
     # sub_dir = 'absolute'
 
-    ohlcv_list = get_data(zz500[:50])
+    ohlcv_list = get_data(zz500)
     split_dates = ["2016-01-01", "2017-01-01"]
     train_set, validate_set, test_set = split_data_set_by_date(ohlcv_list, split_dates, minimum_size=1)
     log_dir = os.path.join('./valid_wave_hyperopt', sub_dir)
@@ -135,15 +135,16 @@ if __name__ == '__main__':
 
     hyperopt_objective = partial(objective, ohlcv_list=test_set, operation='search', mode='relative', log_dir=log_dir)
     trials = Trials()
-    # best = fmin(hyperopt_objective, space, algo=tpe.suggest, max_evals=60, trials=trials)
-    # params = space_eval(space, best)
-    # print(params)
+    best_params = fmin(hyperopt_objective, space, algo=tpe.suggest, max_evals=60, trials=trials)
+    params = space_eval(space, best_params)
+    print("best_params: %s" % params)
 
-    best_params = {
-        'minimum_period': 12.135881002390583,
-        'std_window': 10.0,
-        'withdraw_threshold': 2.0,
-        'max_return_threshold': 1.0,
-        'return_per_count_threshold': 1.0}
-
-    hyperopt_objective(best_params)
+    # # best_params = {
+    # #     'minimum_period': 12.135881002390583,
+    # #     'std_window': 10.0,
+    # #     'withdraw_threshold': 2.0,
+    # #     'max_return_threshold': 1.0,
+    # #     'return_per_count_threshold': 1.0
+    # # }
+    #
+    # hyperopt_objective(best_params)
