@@ -45,9 +45,9 @@ def construct_objective(data_set, target_field, namespace, performance_func, mea
         if not os.path.exists(log_dir):
             os.makedirs(log_dir)
 
-        params_file = os.path.join(log_dir, "params.txt")
-        with open(params_file, 'w') as output:
-            output.write(str(params))
+        params_file = os.path.join(log_dir, "params.pkl")
+        with open(params_file, 'wb') as output:
+            pickle.dump(params, output)
 
         train, validate = data_set['train'], data_set['validate']
 
@@ -61,7 +61,7 @@ def construct_objective(data_set, target_field, namespace, performance_func, mea
         X_validate, Y_validate = reform_X_Y(validate, params['time_steps'], target_field)
 
         model = construct_lstm_model(params, X_train.shape[-1], Y_train.shape[-1], loss=loss)
-        log_histroy = LogHistory(os.path.join(log_dir, 'history.log'))
+        log_histroy = LogHistory(os.path.join(log_dir, 'history.pkl'))
         # early_stop = EarlyStopping(monitor='val_loss', min_delta=params['min_delta'], patience=params['patience'],
         #                            verbose=2, mode='auto')
         model.fit(X_train, Y_train,

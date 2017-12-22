@@ -2,13 +2,16 @@
 # os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"   # see issue #152
 # os.environ["CUDA_VISIBLE_DEVICES"] = ""
 
-from performance import *
+from performance import performance_factory
 from hyperopt import Trials
-from objective import *
+from keras.initializers import glorot_uniform
+from objective import construct_objective
+from data_prepare import get_data, construct_features1, construct_features2
 from hyperopt import fmin, tpe, hp, STATUS_OK, Trials, partial, rand, space_eval
 import uuid
 import seaborn as snb
-from loss import *
+from loss import weighted_categorical_crossentropy
+from functools import partial
 snb.set()
 try:
     import cPpickle as pickle
@@ -40,8 +43,10 @@ if __name__ == '__main__':
         # 'patience': hp.quniform('patience', 10, 100, 10),
     }
 
+    construct_feature_func = construct_features1
+    # construct_feature_func = partial(construct_features2, ma=5, n_std=1, std_window=20)
     data_set, reverse_func = get_data(file_name="E:\market_data/cs_market.csv",
-                                      construct_feature_func=construct_features1,
+                                      construct_feature_func=construct_feature_func,
                                       split_dates=["2016-01-01", "2017-01-01"])
 
     space = default_space

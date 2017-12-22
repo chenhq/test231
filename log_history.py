@@ -2,7 +2,10 @@ import keras
 import uuid
 import os
 import pandas as pd
-import matplotlib.pyplot as plt
+try:
+    import _pickle as pickle
+except:
+    import pickle
 
 
 class LogHistory(keras.callbacks.Callback):
@@ -21,7 +24,8 @@ class LogHistory(keras.callbacks.Callback):
         dirs = os.path.dirname(self.filename)
         if not os.path.exists(dirs):
             os.makedirs(dirs)
-        self.epoch_history_data.to_csv(self.filename)
+        with open(self.filename, 'wb') as output:
+            pickle.dump(self.epoch_history_data, output)
 
         # do not draw
         # if len(self.epoch_history_data) > 0:
