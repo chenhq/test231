@@ -35,8 +35,8 @@ default_space = {
 }
 
 
-def construct_objective2(data_set, target_field, namespace, performance_func, measure,
-                         loss='categorical_crossentropy', include_test_data=False, shuffle_test=False):
+def construct_objective(data_set, target_field, namespace, performance_func, measure,
+                        loss='categorical_crossentropy', include_test_data=False, shuffle_test=False):
     def objective(params):
         identity = str(uuid.uuid1())
         print("identity: {0}, params: {1}".format(identity, params))

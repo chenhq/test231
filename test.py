@@ -16,9 +16,9 @@ if __name__ == '__main__':
     function = "test_weight"
     id = str(uuid.uuid1())
     namespace = function + '_' + id
-    objective_func = construct_objective2(data_set, target_field='label', namespace=namespace,
-                                          performance_func=performance_func, measure='sharpe_ratio',
-                                          loss=weighted_loss, include_test_data=True, shuffle_test=False)
+    objective_func = construct_objective(data_set, target_field='label', namespace=namespace,
+                                         performance_func=performance_func, measure='sharpe_ratio',
+                                         loss=weighted_loss, include_test_data=True, shuffle_test=False)
 
     trials = Trials()
 

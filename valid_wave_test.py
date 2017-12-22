@@ -24,11 +24,12 @@ if __name__ == '__main__':
     # }
 
     best_params = {
-        'minimum_period': 12.135881002390583,
-        'std_window': 10.0,
-        'withdraw_threshold': 2.0,
-        'max_return_threshold': 1.0,
-        'return_per_count_threshold': 1.0}
+        'std_window': 40,
+        'max_return_threshold': 3,
+        'return_per_count_threshold': 0.3,
+        'withdraw_threshold': 2,
+        'minimum_period': 5
+    }
     sub_dir = 'relative'
 
     # function = tag_wave_direction_by_absolute()
@@ -44,7 +45,9 @@ if __name__ == '__main__':
     if not os.path.isdir(log_dir):
         os.makedirs(log_dir)
 
-    tagged_ohlcv_list = valid_wave_by_multi_processes(best_params, ohlcv_list, 'search', 'relative')
+    operation = 'label'
+    # operation = 'search'
+    tagged_ohlcv_list = valid_wave_by_multi_processes(best_params, ohlcv_list, operation, 'relative')
 
     for tagged_ohlcv in tagged_ohlcv_list:
         tagged_ohlcv = tagged_ohlcv.reset_index().reset_index()

@@ -6,10 +6,11 @@ import multiprocessing
 from index_components import *
 
 
-def get_data():
-    market = pd.read_csv("../data/cs_market.csv", parse_dates=["date"], dtype={"code": str})
-    # market = pd.read_csv("~/cs_market.csv", parse_dates=["date"], dtype={"code": str})
-    # market = pd.read_csv("E:\market_data/cs_market.csv", parse_dates=["date"], dtype={"code": str})
+# "../data/cs_market.csv"
+# "~/cs_market.csv"
+# "E:\market_data/cs_market.csv"
+def get_data(file_name, construct_feature_func=construct_features1, split_dates=["2016-01-01", "2017-01-01"]):
+    market = pd.read_csv(file_name, parse_dates=["date"], dtype={"code": str})
     all_ohlcv = market.drop(["Unnamed: 0", "total_turnover", "limit_up", "limit_down"], axis=1)
     all_ohlcv = all_ohlcv.set_index(['code', 'date']).sort_index()
     idx_slice = pd.IndexSlice
@@ -18,14 +19,13 @@ def get_data():
         if stk in zz500[:50]:
             stk_ohlcv = all_ohlcv.loc[idx_slice[stk, :], idx_slice[:]]
             stk_ohlcv_list.append(stk_ohlcv)
-    stk_features_list = construct_features_for_stocks(stk_ohlcv_list, construct_features1)
+    stk_features_list = construct_features_for_stocks(stk_ohlcv_list, construct_feature_func)
     flatten_stk_features_list, reverse_func = to_categorical(pd.concat(stk_features_list, axis=0), 'label',
                                                              categorical_func_factory)
     new_stk_features_list = []
     for stk in flatten_stk_features_list.index.get_level_values('code').unique():
         new_stk_features = flatten_stk_features_list.loc[idx_slice[stk, :], idx_slice[:]]
         new_stk_features_list.append(new_stk_features)
-    split_dates = ["2016-01-01", "2017-01-01"]
     train_set, validate_set, test_set = split_data_set_by_date(new_stk_features_list, split_dates, minimum_size=64)
     train = pd.concat(train_set, axis=0)
     validate = pd.concat(validate_set, axis=0)
@@ -34,11 +34,7 @@ def get_data():
     return data_set, reverse_func
 
 
-def construct_features(ohlcv, construct_features_func):
-    return construct_features_func(ohlcv)
-
-
-def construct_features_for_stocks(ohlcv_list, construct_features_func, processes=3):
+def construct_features_for_stocks(ohlcv_list, construct_features_func, processes=0):
     stock_features_list = []
 
     if processes <= 0:
@@ -60,7 +56,7 @@ def construct_features_for_stocks(ohlcv_list, construct_features_func, processes
     return stock_features_list
 
 
-def construct_features1(ohlcv):
+def construct_features1(ohlcv, ma=5):
     data = pd.DataFrame(index=ohlcv.index)
     data['open_close'] = (ohlcv['open'] - ohlcv['close']) * 100 / ohlcv['close'].shift(1)
     data['high_close'] = (ohlcv['high'] - ohlcv['close']) * 100 / ohlcv['close'].shift(1)
@@ -68,10 +64,31 @@ def construct_features1(ohlcv):
     data['pct_chg'] = ((ohlcv['close'] / ohlcv['close'].shift(1)) - 1) * 100
     data = data.fillna(0)
 
-    next_ma5 = SMA(ohlcv, timeperiod=5).shift(-5)
+    next_ma5 = SMA(ohlcv, timeperiod=ma).shift(-ma)
     data['label'] = 1
     data.loc[ohlcv['close'] < next_ma5, 'label'] = 0
     data.loc[ohlcv['close'] > next_ma5, 'label'] = 2
+
+    ma15_volume = ohlcv['volume'].rolling(15).mean()
+    data['volume'] = ohlcv['volume'] / ma15_volume
+    data['volume'] = data['volume'].fillna(1)
+
+    return data
+
+
+def construct_features2(ohlcv, ma=5, n_std=1, std_window=20):
+    data = pd.DataFrame(index=ohlcv.index)
+    data['open_close'] = (ohlcv['open'] - ohlcv['close']) * 100 / ohlcv['close'].shift(1)
+    data['high_close'] = (ohlcv['high'] - ohlcv['close']) * 100 / ohlcv['close'].shift(1)
+    data['low_close'] = (ohlcv['low'] - ohlcv['close']) * 100 / ohlcv['close'].shift(1)
+    data['pct_chg'] = ((ohlcv['close'] / ohlcv['close'].shift(1)) - 1) * 100
+    data['std'] = data['pct_chg'].rolling(std_window).bfill()
+    data = data.fillna(0)
+
+    next_ma5 = SMA(ohlcv, timeperiod=ma).shift(-ma)
+    data['label'] = 1
+    data.loc[ohlcv['close'] < next_ma5 - (n_std * data['std']), 'label'] = 0
+    data.loc[ohlcv['close'] > next_ma5 + (n_std * data['std']), 'label'] = 2
 
     ma15_volume = ohlcv['volume'].rolling(15).mean()
     data['volume'] = ohlcv['volume'] / ma15_volume

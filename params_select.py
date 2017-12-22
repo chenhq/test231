@@ -40,7 +40,9 @@ if __name__ == '__main__':
         # 'patience': hp.quniform('patience', 10, 100, 10),
     }
 
-    data_set, reverse_func = get_data()
+    data_set, reverse_func = get_data(file_name="E:\market_data/cs_market.csv",
+                                      construct_feature_func=construct_features1,
+                                      split_dates=["2016-01-01", "2017-01-01"])
 
     space = default_space
 
@@ -49,15 +51,18 @@ if __name__ == '__main__':
                                                               'sharpe_ratio'])
 
     function = "params_select"
-    id = str(uuid.uuid1())
-    namespace = function + '_' + id
-    objective_func = construct_objective2(data_set, target_field='label', namespace=namespace,
-                                          performance_func=performance_func, measure='sharpe_ratio',
-                                          include_test_data=True, shuffle_test=False,
-                                          loss=weighted_categorical_crossentropy)
+    identity = str(uuid.uuid1())
+    namespace = function + '_' + identity
+
+    # loss='categorical_crossentropy'
+    loss = weighted_categorical_crossentropy
+    objective_func = construct_objective(data_set, target_field='label', namespace=namespace,
+                                         performance_func=performance_func, measure='sharpe_ratio',
+                                         include_test_data=True, shuffle_test=False,
+                                         loss=loss)
 
     trials = Trials()
 
     best = fmin(objective_func, space, algo=tpe.suggest, max_evals=50, trials=trials)
-    params = space_eval(space, best)
-    print(params)
+    best_params = space_eval(space, best)
+    print(best_params)
