@@ -41,10 +41,11 @@ relative_spaces = {
 }
 
 
-def get_data(stk_list):
+def get_data(filename, stk_list):
     # market = pd.read_csv("../data/cs_market.csv", parse_dates=["date"], dtype={"code": str})
     # market = pd.read_csv("~/cs_market.csv", parse_dates=["date"], dtype={"code": str})
-    market = pd.read_csv("E:\market_data/cs_market.csv", parse_dates=["date"], dtype={"code": str})
+    # market = pd.read_csv("E:\market_data/cs_market.csv", parse_dates=["date"], dtype={"code": str})
+    market = pd.read_csv(filename, parse_dates=["date"], dtype={"code": str})
     all_ohlcv = market.drop(["Unnamed: 0", "total_turnover", "limit_up", "limit_down"], axis=1)
     all_ohlcv = all_ohlcv.set_index(['code', 'date']).sort_index()
     idx_slice = pd.IndexSlice

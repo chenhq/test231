@@ -16,6 +16,7 @@ default_space = {
     'time_steps': hp.choice('time_steps', [32, 64, 128]),
     'batch_size': hp.choice('batch_size', [64, 128]),
     'epochs': hp.choice('epochs', [100, 200, 300, 400, 500]),  # [100, 200, 500, 1000, 1500, 2000]
+    'activation': hp.choice('activation', ['relu', 'sigmoid', 'tanh', 'linear']),
     'shuffle': hp.choice('shuffle', [False, True]),
 
     'units1': hp.choice('units1', [32, 64, 128, 256]),

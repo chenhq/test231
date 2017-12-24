@@ -12,6 +12,7 @@ except:
 def construct_lstm_model(params, input_size, output_size, loss='categorical_crossentropy'):
     model = Sequential()
     model.add(LSTM(int(params['units1']),
+                   activation=params['activation'],
                    return_sequences=True,
                    input_shape=(params['time_steps'], input_size),
                    dropout=params['dropout'],
@@ -22,6 +23,7 @@ def construct_lstm_model(params, input_size, output_size, loss='categorical_cros
         model.add(BatchNormalization())
 
     model.add(LSTM(params['units2'],
+                   activation=params['activation'],
                    return_sequences=True,
                    dropout=params['dropout'],
                    recurrent_dropout=params['recurrent_dropout'],
@@ -31,6 +33,7 @@ def construct_lstm_model(params, input_size, output_size, loss='categorical_cros
         model.add(BatchNormalization())
 
     model.add(LSTM(params['units3'],
+                   activation=params['activation'],
                    return_sequences=True,
                    dropout=params['dropout'],
                    recurrent_dropout=params['recurrent_dropout'],

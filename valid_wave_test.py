@@ -36,7 +36,7 @@ if __name__ == '__main__':
     # space = absolute_spaces
     # sub_dir = 'absolute'
 
-    ohlcv_list = get_data(zz500[50:100])
+    ohlcv_list = get_data('~/cs_market.csv', zz500[50:100])
     split_dates = ["2016-01-01", "2017-01-01"]
     train_set, validate_set, test_set = split_data_set_by_date(ohlcv_list, split_dates, minimum_size=1)
 
