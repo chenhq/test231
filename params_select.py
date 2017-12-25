@@ -47,9 +47,32 @@ if __name__ == '__main__':
     }
 
     # features
-    # construct_feature_func = construct_features1
-    construct_feature_func = partial(construct_features2, ma=5, n_std=0.04, std_window=30)
-    data_set, reverse_func = get_data(file_name="E:\market_data/cs_market.csv",
+    params = {
+        'ma': 5,
+        'std_window': 20,
+        'vol_window': 15
+    }
+    construct_feature_func = partial(construct_features1, params=params, test=False)
+
+    # params = {
+    #     'ma': 5,
+    #     'n_std': 0.3,
+    #     'std_window': 30,
+    #     'vol_window': 15
+    # }
+    # construct_feature_func = partial(construct_features2, params=params, test=False)
+    #
+    # params = {
+    #     'std_window': 40,
+    #     'vol_window': 15,
+    #     'max_return_threshold': 3,
+    #     'return_per_count_threshold': 0.3,
+    #     'withdraw_threshold': 2,
+    #     'minimum_period': 5
+    # }
+    construct_feature_func = partial(construct_feature_func, params=params, test=False)
+
+    data_set, reverse_func = get_data(file_name="~/cs_market.csv",
                                       construct_feature_func=construct_feature_func,
                                       split_dates=["2016-01-01", "2017-01-01"])
 
