@@ -48,26 +48,28 @@ def construct_features1(ohlcv, ma=5):
     return data
 
 
-def construct_features2(ohlcv, ma=5, n_std=1, std_window=20):
+def construct_features2(ohlcv, ma=3, n_std=0.2, std_window=30, test=False):
     data = pd.DataFrame(index=ohlcv.index)
     data['open_close'] = (ohlcv['open'] - ohlcv['close']) * 100 / ohlcv['close'].shift(1)
     data['high_close'] = (ohlcv['high'] - ohlcv['close']) * 100 / ohlcv['close'].shift(1)
     data['low_close'] = (ohlcv['low'] - ohlcv['close']) * 100 / ohlcv['close'].shift(1)
     data['pct_chg'] = ((ohlcv['close'] / ohlcv['close'].shift(1)) - 1) * 100
-    data['std'] = data['pct_chg'].rolling(std_window).std().bfill()
+    data['std'] = ohlcv['close'].rolling(std_window).std().bfill()
     data = data.fillna(0)
 
     next_ma5 = SMA(ohlcv, timeperiod=ma).shift(-ma)
     data['label'] = 1
-    data.loc[ohlcv['close'] > next_ma5 - (n_std * data['std']), 'label'] = 0
-    data.loc[ohlcv['close'] < next_ma5 + (n_std * data['std']), 'label'] = 2
+    data.loc[ohlcv['close'] > next_ma5 + (n_std * data['std']), 'label'] = 0
+    data.loc[ohlcv['close'] < next_ma5 - (n_std * data['std']), 'label'] = 2
 
     ma15_volume = ohlcv['volume'].rolling(15).mean()
     data['volume'] = ohlcv['volume'] / ma15_volume
     data['volume'] = data['volume'].fillna(1)
 
-    return data
-    # return pd.concat([data, ohlcv], axis=1)
+    if test:
+        return pd.concat([data, ohlcv], axis=1)
+    else:
+        return data
 
 
 def categorical_func_factory(num_class, class_list):

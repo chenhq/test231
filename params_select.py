@@ -46,9 +46,10 @@ if __name__ == '__main__':
         # 'patience': hp.quniform('patience', 10, 100, 10),
     }
 
-    construct_feature_func = construct_features1
-    # construct_feature_func = partial(construct_features2, ma=5, n_std=0.1, std_window=20)
-    data_set, reverse_func = get_data(file_name="../data/cs_market.csv",
+    # features
+    # construct_feature_func = construct_features1
+    construct_feature_func = partial(construct_features2, ma=5, n_std=0.04, std_window=30)
+    data_set, reverse_func = get_data(file_name="E:\market_data/cs_market.csv",
                                       construct_feature_func=construct_feature_func,
                                       split_dates=["2016-01-01", "2017-01-01"])
 
@@ -62,6 +63,7 @@ if __name__ == '__main__':
     identity = str(uuid.uuid1())
     namespace = function + '_' + identity
 
+    # loss
     loss = 'categorical_crossentropy'
     # loss = weighted_categorical_crossentropy
     objective_func = construct_objective(data_set, target_field='label', namespace=namespace,
@@ -73,4 +75,4 @@ if __name__ == '__main__':
 
     best = fmin(objective_func, space, algo=tpe.suggest, max_evals=50, trials=trials)
     best_params = space_eval(space, best)
-    print(best_params)
+    print("best_params: {}".format(best_params))
