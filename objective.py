@@ -1,6 +1,7 @@
 import seaborn as snb
 from hyperopt import hp, STATUS_OK
 from keras.initializers import glorot_uniform
+import datetime
 
 from data_prepare import *
 from log_history import *
@@ -40,7 +41,7 @@ def construct_objective(data_set, target_field, namespace, performance_func, mea
                         loss='categorical_crossentropy', include_test_data=False, shuffle_test=False):
     def objective(params):
         identity = str(uuid.uuid1())
-        print("identity: {0}, params: {1}".format(identity, params))
+        print("time: {0}, identity: {1}, params: {2}".format(datetime.datetime.now(), identity, params))
 
         log_dir = os.path.join(namespace, identity)
         if not os.path.exists(log_dir):
