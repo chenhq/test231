@@ -7,7 +7,7 @@ from performance import performance_factory
 from hyperopt import Trials
 from keras.initializers import glorot_uniform
 from objective import construct_objective
-from data_prepare import get_data, construct_features1, construct_features2
+from data_prepare import get_data, construct_features1, construct_features2, construct_features3
 from hyperopt import fmin, tpe, hp, STATUS_OK, Trials, partial, rand, space_eval
 import uuid
 import seaborn as snb
@@ -70,7 +70,7 @@ if __name__ == '__main__':
     #     'withdraw_threshold': 2,
     #     'minimum_period': 5
     # }
-    construct_feature_func = partial(construct_feature_func, params=params, test=False)
+    # construct_feature_func = partial(construct_feature_func3, params=params, test=False)
 
     data_set, reverse_func = get_data(file_name="~/cs_market.csv",
                                       construct_feature_func=construct_feature_func,
