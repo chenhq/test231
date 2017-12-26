@@ -32,29 +32,29 @@ if __name__ == '__main__':
         'activation': hp.choice('activation', ['relu', 'sigmoid', 'tanh', 'linear']),
         'shuffle': hp.choice('shuffle', [False, True]),
 
-        'units1': hp.choice('units1', [32, 64, 128, 256, 512, 1024]),
-        'units2': hp.choice('units2', [32, 64, 128, 256, 512, 1024]),
-        'units3': hp.choice('units3', [32, 64, 128, 256, 512, 1024]),
+        'units1': hp.choice('units1', [128, 256, 512]),
+        'units2': hp.choice('units2', [256, 512, 1024]),
+        'units3': hp.choice('units3', [128, 256, 512]),
 
         'is_BN_1': hp.choice('is_BN_1', [False, True]),
         'is_BN_2': hp.choice('is_BN_2', [False, True]),
         'is_BN_3': hp.choice('is_BN_3', [False, True]),
 
         'lr': hp.loguniform('lr', np.log(0.0001), np.log(0.01)),
-        'dropout': hp.quniform('dropout', 0, 0.5, 0.1),
-        'recurrent_dropout': hp.quniform('recurrent_dropout', 0, 0.5, 0.1),
+        'dropout': hp.quniform('dropout', 0.3, 0.5, 0.1),
+        'recurrent_dropout': hp.quniform('recurrent_dropout', 0.2, 0.5, 0.1),
         'initializer': hp.choice('initializer', [glorot_uniform(seed=123)]),
         # 'min_delta': hp.quniform('min_delta', 0.0002, 0.001, 0.0002),
         # 'patience': hp.quniform('patience', 10, 100, 10),
     }
 
     # featuresx
-    params = {
-        'ma': 5,
-        'std_window': 20,
-        'vol_window': 15
-    }
-    construct_feature_func = partial(construct_features1, params=params, test=False)
+    # params = {
+    #     'ma': 5,
+    #     'std_window': 20,
+    #     'vol_window': 15
+    # }
+    # construct_feature_func = partial(construct_features1, params=params, test=False)
 
     params = {
         'ma': 5,
@@ -74,7 +74,7 @@ if __name__ == '__main__':
     }
     construct_feature_func = partial(construct_features3, params=params, test=False)
 
-    data_set, reverse_func = get_data(file_name="E:\market_data/cs_market.csv", stks=zz500[:50],
+    data_set, reverse_func = get_data(file_name="../data/cs_market.csv", stks=zz500[:50],
                                       construct_feature_func=construct_feature_func,
                                       split_dates=["2016-01-01", "2017-01-01"])
 
@@ -89,8 +89,8 @@ if __name__ == '__main__':
     namespace = function + '_' + identity
 
     # loss
-    loss = 'categorical_crossentropy'
-    # loss = weighted_categorical_crossentropy
+    # loss = 'categorical_crossentropy'
+    loss = weighted_categorical_crossentropy
     objective_func = construct_objective(data_set, target_field='label', namespace=namespace,
                                          performance_func=performance_func, measure='sharpe_ratio',
                                          include_test_data=True, shuffle_test=False,
