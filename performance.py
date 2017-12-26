@@ -17,6 +17,9 @@ def performance_factory(reverse_func, performance_types=['returns']):
         df.loc[short_cond, 'return'] = -pct_chg[short_cond]/100.0
         returns = df['return']
 
+        if 'Y0' in performance_types:
+            Y0 = pd.Series(index=pct_chg.index, data=list(y))
+            result['Y0'] = Y0
         if 'Y' in performance_types:
             result['Y'] = predict
         if 'returns' in performance_types:

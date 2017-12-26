@@ -3,7 +3,9 @@ import matplotlib.pylab as plt
 import pandas as pd
 import seaborn as sbn
 import _pickle as pickle
-from data_prepare import get_data, construct_features1, construct_features2, construct_features3
+from data_prepare import get_data
+from feature.construct_feature import *
+from index_components import sz50, zz500, hs300
 
 sbn.set()
 
@@ -23,17 +25,17 @@ if __name__ == '__main__':
     }
     construct_feature_func = partial(construct_features2, params=params, test=True)
 
-    params = {
-        'std_window': 40,
-        'vol_window': 15,
-        'max_return_threshold': 3,
-        'return_per_count_threshold': 0.3,
-        'withdraw_threshold': 2,
-        'minimum_period': 5
-    }
-    construct_feature_func = partial(construct_features3, params=params, test=True)
+    # params = {
+    #     'std_window': 40,
+    #     'vol_window': 15,
+    #     'max_return_threshold': 3,
+    #     'return_per_count_threshold': 0.3,
+    #     'withdraw_threshold': 2,
+    #     'minimum_period': 5
+    # }
+    # construct_feature_func = partial(construct_features3, params=params, test=True)
 
-    data_set, reverse_func = get_data(file_name="~/cs_market.csv",
+    data_set, reverse_func = get_data(file_name="E:\market_data/cs_market.csv", stks=zz500[:50],
                                       construct_feature_func=construct_feature_func,
                                       split_dates=["2016-01-01", "2017-01-01"])
 

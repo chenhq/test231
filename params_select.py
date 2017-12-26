@@ -7,8 +7,10 @@ from performance import performance_factory
 from hyperopt import Trials
 from keras.initializers import glorot_uniform
 from objective import construct_objective
-from data_prepare import get_data, construct_features1, construct_features2, construct_features3
+from data_prepare import get_data
+from feature.construct_feature import *
 from hyperopt import fmin, tpe, hp, STATUS_OK, Trials, partial, rand, space_eval
+from index_components import sz50, hs300, zz500
 import uuid
 import seaborn as snb
 snb.set()
@@ -46,7 +48,7 @@ if __name__ == '__main__':
         # 'patience': hp.quniform('patience', 10, 100, 10),
     }
 
-    # features
+    # featuresx
     params = {
         'ma': 5,
         'std_window': 20,
@@ -54,32 +56,32 @@ if __name__ == '__main__':
     }
     construct_feature_func = partial(construct_features1, params=params, test=False)
 
-    # params = {
-    #     'ma': 5,
-    #     'n_std': 0.3,
-    #     'std_window': 30,
-    #     'vol_window': 15
-    # }
-    # construct_feature_func = partial(construct_features2, params=params, test=False)
-    #
-    # params = {
-    #     'std_window': 40,
-    #     'vol_window': 15,
-    #     'max_return_threshold': 3,
-    #     'return_per_count_threshold': 0.3,
-    #     'withdraw_threshold': 2,
-    #     'minimum_period': 5
-    # }
-    # construct_feature_func = partial(construct_feature_func3, params=params, test=False)
+    params = {
+        'ma': 5,
+        'n_std': 0.3,
+        'std_window': 30,
+        'vol_window': 15
+    }
+    construct_feature_func = partial(construct_features2, params=params, test=False)
 
-    data_set, reverse_func = get_data(file_name="~/cs_market.csv",
+    params = {
+        'std_window': 40,
+        'vol_window': 15,
+        'max_return_threshold': 3,
+        'return_per_count_threshold': 0.3,
+        'withdraw_threshold': 2,
+        'minimum_period': 5
+    }
+    construct_feature_func = partial(construct_features3, params=params, test=False)
+
+    data_set, reverse_func = get_data(file_name="E:\market_data/cs_market.csv", stks=zz500[:50],
                                       construct_feature_func=construct_feature_func,
                                       split_dates=["2016-01-01", "2017-01-01"])
 
     space = default_space
 
     performance_func = performance_factory(reverse_func,
-                                           performance_types=['Y', 'returns', 'cum_returns', 'annual_return',
+                                           performance_types=['Y0', 'Y', 'returns', 'cum_returns', 'annual_return',
                                                               'sharpe_ratio'])
 
     function = "params_select"

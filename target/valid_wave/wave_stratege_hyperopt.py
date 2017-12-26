@@ -8,7 +8,7 @@ from hyperopt import fmin, tpe, hp, STATUS_OK, Trials, space_eval
 
 from data_prepare import split_data_set_by_date
 from index_components import zz500
-from valid_wave import *
+from target.valid_wave.wave_strategy import *
 
 try:
     import _pickle as pickle
@@ -29,23 +29,20 @@ absolute_spaces = {
 
 relative_spaces = {
     'std_window':
-        hp.quniform('window', 10, 60, 5),
-    'max_return_threshold':
-        hp.quniform('max_return_threshold', 5.0, 8.0, 0.5),
+        hp.quniform('window', 3, 30, 2),
+    'first_count_threshold':
+        hp.quniform('first_count_threshold', 0.1, 3.0, 0.1),
     'return_per_count_threshold':
-        hp.quniform('return_per_count_threshold', 0.3, 1.0, 0.1),
+        hp.quniform('return_per_count_threshold', 0.1, 3.0, 0.1),
     'withdraw_threshold':
-        hp.quniform('withdraw_threshold', 0.5, 5, 0.5),
-    'minimum_period':
-        hp.uniform('minimum_period', 5, 20)
+        hp.quniform('withdraw_threshold', 0.2, 4, 0.2)
 }
 
 
-def get_data(filename, stk_list):
+def get_data(stk_list):
     # market = pd.read_csv("../data/cs_market.csv", parse_dates=["date"], dtype={"code": str})
     # market = pd.read_csv("~/cs_market.csv", parse_dates=["date"], dtype={"code": str})
-    # market = pd.read_csv("E:\market_data/cs_market.csv", parse_dates=["date"], dtype={"code": str})
-    market = pd.read_csv(filename, parse_dates=["date"], dtype={"code": str})
+    market = pd.read_csv("E:\market_data/cs_market.csv", parse_dates=["date"], dtype={"code": str})
     all_ohlcv = market.drop(["Unnamed: 0", "total_turnover", "limit_up", "limit_down"], axis=1)
     all_ohlcv = all_ohlcv.set_index(['code', 'date']).sort_index()
     idx_slice = pd.IndexSlice
@@ -77,8 +74,8 @@ def valid_wave_by_multi_processes(params, ohlcv_list, operation, mode, processes
         else:
             std_window = 0
         pool.apply_async(tag_wave_direction, args=(
-            ohlcv, params['max_return_threshold'], params['return_per_count_threshold'],
-            params['withdraw_threshold'], params['minimum_period'], operation, mode, std_window,),
+            ohlcv, params['first_count_threshold'], params['return_per_count_threshold'],
+            params['withdraw_threshold'], operation, mode, std_window,),
                          callback=callback, error_callback=print_error)
 
     pool.close()
@@ -108,7 +105,7 @@ def objective(params, ohlcv_list, operation, mode, log_dir):
         'returns': returns,
         'annual_return': annual_return,
         'sharpe_ratio': sharpe_ratio,
-        'result_list': result_list
+        # 'result_list': result_list
     }
 
     with open(os.path.join(log_dir, identity + '.pkl'), 'wb') as f:
@@ -126,7 +123,7 @@ if __name__ == '__main__':
     # space = absolute_spaces
     # sub_dir = 'absolute'
 
-    ohlcv_list = get_data(zz500)
+    ohlcv_list = get_data(zz500[:50])
     split_dates = ["2016-01-01", "2017-01-01"]
     train_set, validate_set, test_set = split_data_set_by_date(ohlcv_list, split_dates, minimum_size=1)
     log_dir = os.path.join('./valid_wave_hyperopt', sub_dir)
@@ -136,16 +133,15 @@ if __name__ == '__main__':
 
     hyperopt_objective = partial(objective, ohlcv_list=test_set, operation='search', mode='relative', log_dir=log_dir)
     trials = Trials()
-    best_params = fmin(hyperopt_objective, space, algo=tpe.suggest, max_evals=60, trials=trials)
-    params = space_eval(space, best_params)
-    print("best_params: %s" % params)
+    best = fmin(hyperopt_objective, space, algo=tpe.suggest, max_evals=60, trials=trials)
+    params = space_eval(space, best)
+    print(params)
 
-    # # best_params = {
-    # #     'minimum_period': 12.135881002390583,
-    # #     'std_window': 10.0,
-    # #     'withdraw_threshold': 2.0,
-    # #     'max_return_threshold': 1.0,
-    # #     'return_per_count_threshold': 1.0
-    # # }
+    # best_params = {
+    #     'minimum_period': 12.135881002390583,
+    #     'std_window': 10.0,
+    #     'withdraw_threshold': 2.0,
+    #     'max_return_threshold': 1.0,
+    #     'return_per_count_threshold': 1.0}
     #
     # hyperopt_objective(best_params)

@@ -1,12 +1,13 @@
-from valid_wave import tag_wave_direction
-from valid_wave_hyperopt import valid_wave_by_multi_processes, get_data
+import os
+
 import matplotlib.pylab as plt
 import numpy as np
 import pandas as pd
-import os
-from index_components import sz50, zz500, hs300
-from data_prepare import split_data_set_by_date
+from valid_wave import tag_wave_direction
 
+from data_prepare import split_data_set_by_date
+from index_components import zz500
+from target.valid_wave.valid_wave_hyperopt import valid_wave_by_multi_processes, get_data
 
 if __name__ == '__main__':
     function = tag_wave_direction

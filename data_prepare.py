@@ -1,10 +1,9 @@
+import multiprocessing
+import random
+
 import numpy as np
 import pandas as pd
-from talib.abstract import *
-import random
-import multiprocessing
-from index_components import sz50, zz500, hs300
-from valid_wave import tag_wave_direction
+from feature.construct_feature import construct_features1
 
 
 def construct_features_for_stocks(ohlcv_list, construct_features_func, processes=0):
@@ -27,82 +26,6 @@ def construct_features_for_stocks(ohlcv_list, construct_features_func, processes
     pool.close()
     pool.join()
     return stock_features_list
-
-
-def construct_features1(ohlcv, params, test=False):
-    data = pd.DataFrame(index=ohlcv.index)
-    data['open_close'] = (ohlcv['open'] - ohlcv['close']) * 100 / ohlcv['close'].shift(1)
-    data['high_close'] = (ohlcv['high'] - ohlcv['close']) * 100 / ohlcv['close'].shift(1)
-    data['low_close'] = (ohlcv['low'] - ohlcv['close']) * 100 / ohlcv['close'].shift(1)
-    data['pct_chg'] = ((ohlcv['close'] / ohlcv['close'].shift(1)) - 1) * 100
-    data['std'] = data['pct_chg'].rolling(params['std_window']).std().bfill()
-    data = data.fillna(0)
-
-    ma15_volume = ohlcv['volume'].rolling(params['vol_window']).mean()
-    data['volume'] = ohlcv['volume'] / ma15_volume
-    data['volume'] = data['volume'].fillna(1)
-
-    next_ma5 = SMA(ohlcv, timeperiod=params['ma']).shift(-params['ma'])
-    data['label'] = 1
-    data.loc[ohlcv['close'] > next_ma5, 'label'] = 0
-    data.loc[ohlcv['close'] < next_ma5, 'label'] = 2
-
-    if test:
-        return pd.concat([data, ohlcv], axis=1)
-    else:
-        return data
-
-
-def construct_features2(ohlcv, params, test=False):
-    data = pd.DataFrame(index=ohlcv.index)
-    data['open_close'] = (ohlcv['open'] - ohlcv['close']) * 100 / ohlcv['close'].shift(1)
-    data['high_close'] = (ohlcv['high'] - ohlcv['close']) * 100 / ohlcv['close'].shift(1)
-    data['low_close'] = (ohlcv['low'] - ohlcv['close']) * 100 / ohlcv['close'].shift(1)
-    data['pct_chg'] = ((ohlcv['close'] / ohlcv['close'].shift(1)) - 1) * 100
-    data['std'] = data['pct_chg'].rolling(params['std_window']).std().bfill()
-    price_std = ohlcv['close'].rolling(params['std_window']).std().bfill()
-    data = data.fillna(0)
-
-    ma15_volume = ohlcv['volume'].rolling(params['vol_window']).mean()
-    data['volume'] = ohlcv['volume'] / ma15_volume
-    data['volume'] = data['volume'].fillna(1)
-
-    next_ma5 = SMA(ohlcv, timeperiod=params['ma']).shift(-params['ma'])
-    data['label'] = 1
-    data.loc[ohlcv['close'] > next_ma5 + (params['n_std'] * price_std), 'label'] = 0
-    data.loc[ohlcv['close'] < next_ma5 - (params['n_std'] * price_std), 'label'] = 2
-
-    if test:
-        return pd.concat([data, ohlcv], axis=1)
-    else:
-        return data
-
-
-def construct_features3(ohlcv, params, test=False):
-    data = pd.DataFrame(index=ohlcv.index)
-    data['open_close'] = (ohlcv['open'] - ohlcv['close']) * 100 / ohlcv['close'].shift(1)
-    data['high_close'] = (ohlcv['high'] - ohlcv['close']) * 100 / ohlcv['close'].shift(1)
-    data['low_close'] = (ohlcv['low'] - ohlcv['close']) * 100 / ohlcv['close'].shift(1)
-
-    data['pct_chg'] = ((ohlcv['close'] / ohlcv['close'].shift(1)) - 1) * 100
-    data['std'] = data['pct_chg'].rolling(params['std_window']).std().bfill()
-    data = data.fillna(0)
-
-    ma15_volume = ohlcv['volume'].rolling(params['vol_window']).mean()
-    data['volume'] = ohlcv['volume'] / ma15_volume
-    data['volume'] = data['volume'].fillna(1)
-
-    new_ohlcv = tag_wave_direction(ohlcv, params['max_return_threshold'], params[' return_per_count_threshold'],
-                                   params['withdraw_threshold'], params['minimum_period'], operation='label',
-                                   mode='relative', std_window=params['std_window'])
-    direction = new_ohlcv['direction']
-
-    data['label'] = direction.fillna(0) + 1
-
-    if test:
-            return pd.concat([data, new_ohlcv], axis=1)
-    else:
-            return data
 
 
 def categorical_func_factory(num_class, class_list):
@@ -210,14 +133,14 @@ def reform_X_Y(data, timesteps, target_field='label'):
 # "../data/cs_market.csv"
 # "~/cs_market.csv"
 # "E:\market_data/cs_market.csv"
-def get_data(file_name, construct_feature_func=construct_features1, split_dates=["2016-01-01", "2017-01-01"]):
+def get_data(file_name, stks, construct_feature_func=construct_features1, split_dates=["2016-01-01", "2017-01-01"]):
     market = pd.read_csv(file_name, parse_dates=["date"], dtype={"code": str})
     all_ohlcv = market.drop(["Unnamed: 0", "total_turnover", "limit_up", "limit_down"], axis=1)
     all_ohlcv = all_ohlcv.set_index(['code', 'date']).sort_index()
     idx_slice = pd.IndexSlice
     stk_ohlcv_list = []
     for stk in all_ohlcv.index.get_level_values('code').unique():
-        if stk in zz500[:50]:
+        if stk in stks:
             stk_ohlcv = all_ohlcv.loc[idx_slice[stk, :], idx_slice[:]]
             stk_ohlcv_list.append(stk_ohlcv)
     stk_features_list = construct_features_for_stocks(stk_ohlcv_list, construct_feature_func)
@@ -233,3 +156,4 @@ def get_data(file_name, construct_feature_func=construct_features1, split_dates=
     test = pd.concat(test_set, axis=0)
     data_set = {'train': train, 'validate': validate, 'test': test}
     return data_set, reverse_func
+
