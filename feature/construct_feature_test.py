@@ -38,7 +38,7 @@ if __name__ == '__main__':
     # construct_feature_func = partial(construct_features3, params=params, test=True)
 
     params = {
-        'window': 60,
+        'window': 250,
         'next_price_window': 3,
         'quantile_list': [0, 0.1, 0.3, 0.7, 0.9, 1]
     }

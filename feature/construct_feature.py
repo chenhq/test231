@@ -120,19 +120,19 @@ def construct_features_kline(ohlcv, params, test=False):
 
 
 # params = {
-#     'window': 60,
+#     'window': 250,
 #     'next_price_window': 3,
 #     'quantile_list': [0, 0.1, 0.3, 0.7, 0.9, 1]
 # }
 def construct_label_by_next_price(ohlcv, params, test=False, epsilon=0.0000001):
     label = pd.DataFrame(index=ohlcv.index)
     next_ma = SMA(ohlcv, timeperiod=params['next_price_window']).shift(-params['next_price_window'])
-    price_gap = (ohlcv['close'] - next_ma).fillna(0)
+    price_gap = (next_ma - ohlcv['close']).fillna(0)
 
     quantile_list = params['quantile_list']
     for i in range(len(quantile_list)-1):
-        cond = (price_gap > price_gap.quantile(quantile_list[i]) - epsilon) & \
-               (price_gap < price_gap.quantile(quantile_list[i+1]) + epsilon)
+        cond = (price_gap > price_gap.rolling(params['window']).quantile(quantile_list[i]).bfill() - epsilon) & \
+               (price_gap < price_gap.rolling(params['window']).quantile(quantile_list[i+1]).bfill() + epsilon)
         label.loc[cond, 'label'] = i
 
     if test:
