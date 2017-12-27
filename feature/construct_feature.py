@@ -1,5 +1,6 @@
 import pandas as pd
 from talib.abstract import *
+
 from target.valid_wave.valid_wave import tag_wave_direction
 
 
@@ -74,6 +75,81 @@ def construct_features3(ohlcv, params, test=False):
     data['label'] = direction.fillna(0) + 1
 
     if test:
-            return pd.concat([data, new_ohlcv], axis=1)
+        return pd.concat([data, new_ohlcv], axis=1)
     else:
-            return data
+        return data
+
+
+# params = {
+#     'window': 60,
+# }
+def construct_features_kline(ohlcv, params, test=False):
+    data = pd.DataFrame(index=ohlcv.index)
+
+    open_close = (ohlcv['open'] - ohlcv['close']) / ohlcv['close']
+    col = 'open_close_{}'.format(params['window'])
+    data[col] = (open_close - open_close.rolling(params['window']).mean().bfill()) / open_close.rolling(
+        params['window']).std().bfill()
+
+    high_close = (ohlcv['high'] - ohlcv['close']) / ohlcv['close']
+    col = 'high_close_{}'.format(params['window'])
+    data[col] = (high_close - high_close.rolling(params['window']).mean().bfill()) / high_close.rolling(
+        params['window']).std().bfill()
+
+    low_close = (ohlcv['low'] - ohlcv['close']) / ohlcv['close']
+    col = 'low_close_{}'.format(params['window'])
+    data[col] = (low_close - low_close.rolling(params['window']).mean().bfill()) / low_close.rolling(
+        params['window']).std().bfill()
+
+    pct_chg = ohlcv['close'].pct_change().fillna(0)
+    col = 'pct_chg_{}'.format(params['window'])
+    data[col] = (low_close - pct_chg.rolling(params['window']).mean().bfill()) / pct_chg.rolling(
+        params['window']).std().bfill()
+
+    col = 'std_pct_chg_{}'.format(params['window'])
+    data[col] = pct_chg.rolling(params['window']).std().bfill()
+
+    col = 'volume_{}'.format(params['window'])
+    data[col] = (ohlcv['volume'] - ohlcv['volume'].rolling(params['window']).mean().bfill()) / ohlcv[
+        'volume'].rolling(params['window']).std().bfill()
+
+    if test:
+        return pd.concat([data, ohlcv], axis=1)
+    else:
+        return data
+
+
+# params = {
+#     'window': 60,
+#     'next_price_window': 3,
+#     'quantile_list': [0, 0.1, 0.3, 0.7, 0.9, 1]
+# }
+def construct_label_by_next_price(ohlcv, params, test=False, epsilon=0.0000001):
+    label = pd.DataFrame(index=ohlcv.index)
+    next_ma = SMA(ohlcv, timeperiod=params['next_price_window']).shift(-params['next_price_window'])
+    price_gap = (ohlcv['close'] - next_ma).fillna(0)
+
+    quantile_list = params['quantile_list']
+    for i in range(len(quantile_list)-1):
+        cond = (price_gap > price_gap.quantile(quantile_list[i]) - epsilon) & \
+               (price_gap < price_gap.quantile(quantile_list[i+1]) + epsilon)
+        label.loc[cond, 'label'] = i
+
+    if test:
+        return pd.concat([label, ohlcv], axis=1)
+    else:
+        return label
+
+
+def construct_features(ohlcv, params_list, func_list, test=False):
+    result_list = []
+    for params in params_list:
+        result_list.append(func_list(ohlcv, params))
+
+    results = pd.concat(result_list, axis=1)
+
+    if test:
+        return pd.concat([results, ohlcv], axis=1)
+    else:
+        return results
+

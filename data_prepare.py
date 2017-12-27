@@ -41,7 +41,7 @@ def categorical_func_factory(num_class, class_list):
 
 
 def to_categorical(data, column, func):
-    class_list = data[column].unique()
+    class_list = data[column].unique().tolist()
     class_list.sort()
     num_class = len(class_list)
     data[column] = data[column].copy().map(func(num_class, class_list))
