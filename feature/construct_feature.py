@@ -1,6 +1,6 @@
 import pandas as pd
 from talib.abstract import *
-
+import numpy as np
 from target.valid_wave.valid_wave import tag_wave_direction
 
 
@@ -83,7 +83,7 @@ def construct_features3(ohlcv, params, test=False):
 # params = {
 #     'window': 60,
 # }
-def construct_features_kline(ohlcv, params, test=False):
+def features_kline(ohlcv, params, test=False):
     data = pd.DataFrame(index=ohlcv.index)
 
     open_close = (ohlcv['open'] - ohlcv['close']) / ohlcv['close']
@@ -120,19 +120,19 @@ def construct_features_kline(ohlcv, params, test=False):
 
 
 # params = {
-#     'window': 60,
-#     'next_price_window': 3,
+#     'window': 250,
+#     'next_ma_window': 3,
 #     'quantile_list': [0, 0.1, 0.3, 0.7, 0.9, 1]
 # }
-def construct_label_by_next_price(ohlcv, params, test=False, epsilon=0.0000001):
+def label_by_ma_price(ohlcv, params, test=False, epsilon=0.0001):
     label = pd.DataFrame(index=ohlcv.index)
-    next_ma = SMA(ohlcv, timeperiod=params['next_price_window']).shift(-params['next_price_window'])
-    price_gap = (ohlcv['close'] - next_ma).fillna(0)
+    next_ma = SMA(ohlcv, timeperiod=params['next_ma_window']).shift(-params['next_ma_window'])
+    price_gap = (next_ma - ohlcv['close']).fillna(0)
 
     quantile_list = params['quantile_list']
     for i in range(len(quantile_list)-1):
-        cond = (price_gap > price_gap.quantile(quantile_list[i]) - epsilon) & \
-               (price_gap < price_gap.quantile(quantile_list[i+1]) + epsilon)
+        cond = (price_gap > price_gap.rolling(params['window']).quantile(quantile_list[i]).bfill() - epsilon) & \
+               (price_gap < price_gap.rolling(params['window']).quantile(quantile_list[i+1]).bfill() + epsilon)
         label.loc[cond, 'label'] = i
 
     if test:
@@ -143,8 +143,10 @@ def construct_label_by_next_price(ohlcv, params, test=False, epsilon=0.0000001):
 
 def construct_features(ohlcv, params_list, func_list, test=False):
     result_list = []
-    for params in params_list:
-        result_list.append(func_list(ohlcv, params))
+    for i in range(len(params_list)):
+        params = params_list[i]
+        function = func_list[i]
+        result_list.append(function(ohlcv, params))
 
     results = pd.concat(result_list, axis=1)
 

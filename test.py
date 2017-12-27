@@ -5,7 +5,7 @@
 from params_select import *
 from objective import *
 from hyperopt import fmin, tpe, hp, STATUS_OK, Trials, partial, rand, space_eval
-from loss import weighted_categorical_crossentropy
+from loss import weighted_categorical_crossentropy3
 
 if __name__ == '__main__':
     params = {
@@ -27,7 +27,7 @@ if __name__ == '__main__':
     namespace = function + '_' + identity
 
     # loss = 'categorical_crossentropy'
-    loss = weighted_categorical_crossentropy
+    loss = weighted_categorical_crossentropy3
     objective_func = construct_objective(data_set, target_field='label', namespace=namespace,
                                          performance_func=performance_func, measure='sharpe_ratio',
                                          loss=loss, include_test_data=True, shuffle_test=False)
