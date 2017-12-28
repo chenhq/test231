@@ -147,6 +147,48 @@ def pct_chg(ohlcv, price='close'):
     return pct_changes
 
 
+# params = {
+#     'ma_list': [1, 2, 3, 5, 8, 13, 21, 34, 55],
+#     'window': 128,
+#     'price': 'close'
+# }
+def ma(ohlcv, params, test=False):
+    if 'ma_list' in params:
+        ma_list = params['ma_list']
+    else:
+        ma_list = [1, 2, 3, 5, 8, 13, 21, 34, 55]
+
+    if 'window' in params:
+        window = params['window']
+    else:
+        window = 128
+
+    if 'price' in params:
+        price = params['price']
+    else:
+        price = 'close'
+
+    mas = pd.DataFrame(index=ohlcv.index)
+
+    for win in ma_list:
+        if win == 1:
+            mas['ma_{}'.format(win)] = ohlcv[price]
+        else:
+            mas['ma_{}'.format(win)] = SMA(ohlcv, timeperiod=win, price=price).bfill()
+
+    price_max = ohlcv[price].rolling(window).max().bfill()
+    price_min = ohlcv[price].rolling(window).min().bfill()
+
+    standard_mas = pd.DataFrame(index=ohlcv.index)
+    for col in mas.columns:
+        standard_mas[col] = (((mas[col] - price_min) / (price_max - price_min)) - 0.5) * 2
+
+    if test:
+        return pd.concat([standard_mas, ohlcv], axis=1)
+    else:
+        return standard_mas
+
+
 def construct_features(ohlcv, params_list, func_list, test=False):
     result_list = []
     for i in range(len(params_list)):
@@ -163,4 +205,3 @@ def construct_features(ohlcv, params_list, func_list, test=False):
         return pd.concat([results, ohlcv], axis=1)
     else:
         return results
-

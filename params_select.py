@@ -13,6 +13,7 @@ from hyperopt import fmin, tpe, hp, STATUS_OK, Trials, partial, rand, space_eval
 from index_components import sz50, hs300, zz500
 import uuid
 import seaborn as snb
+import os
 snb.set()
 from loss import *
 from functools import partial
@@ -28,7 +29,7 @@ if __name__ == '__main__':
     default_space = {
         'time_steps': hp.choice('time_steps', [32, 64]),
         'batch_size': hp.choice('batch_size', [64, 128]),
-        'epochs': hp.choice('epochs', [100, 200, 300, 400, 500]),  # [100, 200, 500, 1000, 1500, 2000]
+        'epochs': hp.choice('epochs', [50]),  # 100, 200, 300, 400, 500]),  # [100, 200, 500, 1000, 1500, 2000]
         'activation': hp.choice('activation', ['relu', 'sigmoid', 'tanh', 'linear']),
         # for class
         'activation_last': hp.choice('activation_last', ['softmax']),
@@ -97,7 +98,7 @@ if __name__ == '__main__':
 
     construct_feature_func = partial(construct_features, params_list=params_list, func_list=func_list, test=False)
 
-    data_set, reverse_func = get_data(file_name="~/cs_market.csv", stks=zz500[:50],
+    data_set, reverse_func = get_data(file_name="E:\market_data/cs_market.csv", stks=zz500[:50],
                                       construct_feature_func=construct_feature_func,
                                       split_dates=["2016-01-01", "2017-01-01"])
 
@@ -112,11 +113,18 @@ if __name__ == '__main__':
     identity = str(uuid.uuid1())
     namespace = function + '_' + identity
 
+    log_dir = os.path.join('./', namespace)
+    if not os.path.exists(log_dir):
+        os.makedirs(log_dir)
+
+    with open(os.path.join(log_dir, 'data.pkl'), 'wb') as f:
+        pickle.dump(data_set, f)
+
     # loss
     # loss = 'categorical_crossentropy'
     loss = weighted_categorical_crossentropy5
     objective_func = construct_objective(data_set, target_field='label', namespace=namespace,
-                                         performance_func=performance_func, measure='sharpe_ratio',
+                                         performance_func=performance_func, measure='loss',
                                          include_test_data=True, shuffle_test=False,
                                          loss=loss)
 

@@ -75,22 +75,29 @@ def construct_objective(data_set, target_field, namespace, performance_func, mea
                   callbacks=[log_histroy])  # early_stop
 
         to_be_predict_set = {}
-        to_be_predict_set['validate'] = [validate, X_validate]
+        to_be_predict_set['validate'] = [validate, X_validate, Y_validate]
 
         if include_test_data:
             test = data_set['test']
             test_available_length = len(test) // minimum_size * minimum_size
             test = test.tail(test_available_length)
-            X_test, _ = reform_X_Y(test, params['time_steps'], target_field)
+            X_test, Y_test = reform_X_Y(test, params['time_steps'], target_field)
 
-            to_be_predict_set['test'] = [test, X_test]
+            to_be_predict_set['test'] = [test, X_test, Y_test]
 
         loss_value = 0
+        performances = {}
         for tag in to_be_predict_set:
-            performances = model_predict(model, to_be_predict_set[tag][0], to_be_predict_set[tag][1],
+            performances[tag] = model_predict(model, to_be_predict_set[tag][0], to_be_predict_set[tag][1],
                                          tag, log_dir, performance_func)
-            if tag == 'validate':
-                loss_value = -performances[measure]
+            scores = model.evaluate(to_be_predict_set[tag][1], to_be_predict_set[tag][2], verbose=1)
+            performances[tag]['loss'] = scores[0]
+            performances[tag]['metrics'] = scores[0]
+
+        if measure in ['loss']:
+            loss_value = performances['validate'][measure]
+        else:
+            loss_value = -performances['validate'][measure]
 
         # add for test reset_status
         # for tag in to_be_predict_set:
