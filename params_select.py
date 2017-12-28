@@ -29,7 +29,7 @@ if __name__ == '__main__':
     default_space = {
         'time_steps': hp.choice('time_steps', [32, 64]),
         'batch_size': hp.choice('batch_size', [64, 128]),
-        'epochs': hp.choice('epochs', [50]),  # 100, 200, 300, 400, 500]),  # [100, 200, 500, 1000, 1500, 2000]
+        'epochs': hp.choice('epochs', [5]),  # 100, 200, 300, 400, 500]),  # [100, 200, 500, 1000, 1500, 2000]
         'activation': hp.choice('activation', ['relu', 'sigmoid', 'tanh', 'linear']),
         # for class
         'activation_last': hp.choice('activation_last', ['softmax']),
@@ -96,9 +96,17 @@ if __name__ == '__main__':
     params_list.append(label_by_ma_price_params)
     func_list.append(label_by_ma_price)
 
+    ma_params = {
+        'ma_list': [1, 2, 3, 5, 8, 13, 21, 34, 55],
+        'window': 256,
+        'price': 'close'
+    }
+    params_list.append(ma_params)
+    func_list.append(ma)
+
     construct_feature_func = partial(construct_features, params_list=params_list, func_list=func_list, test=False)
 
-    data_set, reverse_func = get_data(file_name="E:\market_data/cs_market.csv", stks=zz500[:50],
+    data_set, reverse_func = get_data(file_name="~/cs_market.csv", stks=zz500[:50],
                                       construct_feature_func=construct_feature_func,
                                       split_dates=["2016-01-01", "2017-01-01"])
 

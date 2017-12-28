@@ -12,7 +12,7 @@ if __name__ == '__main__':
 
     ma_params = {
         'ma_list': [1, 2, 3, 5, 8, 13, 21, 34, 55],
-        'window': 128,
+        'window': 256,
         'price': 'close'
     }
     params_list.append(ma_params)
@@ -28,13 +28,13 @@ if __name__ == '__main__':
 
     construct_feature_func = partial(construct_features, params_list=params_list, func_list=func_list, test=True)
 
-    data_set, reverse_func = get_data(file_name="E:\market_data/cs_market.csv", stks=zz500[:1],
+    data_set, reverse_func = get_data(file_name="~/cs_market.csv", stks=zz500[200:201],
                                       construct_feature_func=construct_feature_func,
                                       split_dates=["2016-01-01", "2017-01-01"])
 
     train = data_set['train']
     print(train.columns)
-    i_columns = ['ma_1', 'ma_2', 'ma_3', 'ma_5', 'ma_8', 'ma_13', 'ma_21', 'ma_34','ma_55']
+    i_columns = ['ma_1', 'ma_2', 'ma_3', 'ma_5', 'ma_8', 'ma_13', 'ma_21', 'ma_34', 'ma_55']
 
     train.loc[:, i_columns].plot(figsize=(21, 7))
     plt.show()

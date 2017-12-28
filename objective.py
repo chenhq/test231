@@ -90,7 +90,7 @@ def construct_objective(data_set, target_field, namespace, performance_func, mea
         for tag in to_be_predict_set:
             performances[tag] = model_predict(model, to_be_predict_set[tag][0], to_be_predict_set[tag][1],
                                          tag, log_dir, performance_func)
-            scores = model.evaluate(to_be_predict_set[tag][1], to_be_predict_set[tag][2], verbose=1)
+            scores = model.evaluate(to_be_predict_set[tag][1], to_be_predict_set[tag][2], verbose=0)
             performances[tag]['loss'] = scores[0]
             performances[tag]['metrics'] = scores[0]
 
