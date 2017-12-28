@@ -39,12 +39,12 @@ if __name__ == '__main__':
 
     params = {
         'window': 250,
-        'next_price_window': 3,
+        'next_ma_window': 3,
         'quantile_list': [0, 0.1, 0.3, 0.7, 0.9, 1]
     }
-    construct_feature_func = partial(construct_label_by_next_price, params=params, test=True)
+    construct_feature_func = partial(label_by_ma_price, params=params, test=True)
 
-    data_set, reverse_func = get_data(file_name="E:\market_data/cs_market.csv", stks=zz500[:50],
+    data_set, reverse_func = get_data(file_name="~/cs_market.csv", stks=zz500[:50],
                                       construct_feature_func=construct_feature_func,
                                       split_dates=["2016-01-01", "2017-01-01"])
 
@@ -79,7 +79,8 @@ if __name__ == '__main__':
             c = colors[i]
             selected = train_ohlcv[train_ohlcv['label2'] == label]
             print("{}: {}".format(label, len(selected) / len(train_ohlcv)))
-            selected.plot.scatter(x='index', y='close', s=10, c=c, figsize=(21, 7), ax=ax, label=label)
+            if len(selected) > 0:
+                selected.plot.scatter(x='index', y='close', s=10, c=c, figsize=(21, 7), ax=ax, label=label)
 
         # if len(up) > 0:
         #     up.plot.scatter(x='index', y='close', s=10, c='r', figsize=(21, 7), ax=ax)

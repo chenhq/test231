@@ -45,7 +45,7 @@ def construct_lstm_model(params, input_size, output_size, loss='categorical_cros
     model.add(TimeDistributed(Dense(output_size,
                                     kernel_initializer=params['initializer'],
                                     bias_initializer=params['initializer'],
-                                    activation='softmax')))
+                                    activation=params['activation_last'])))
 
     model.compile(optimizer=RMSprop(lr=params['lr']), loss=loss, metrics=['accuracy'])
 

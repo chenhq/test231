@@ -26,10 +26,20 @@ def w_categorical_crossentropy(y_true, y_pred, weights):
     return K.categorical_crossentropy(y_pred, y_true) * final_mask
 
 
-w_array = np.array(
+w_array3 = np.array(
     [[1.0, 2.0, 4.0],
      [2.0, 1.0, 2.0],
      [4.0, 2.0, 1.0]]
 )
-weighted_categorical_crossentropy = partial(w_categorical_crossentropy, weights=w_array)
-weighted_categorical_crossentropy.__name__ = 'w_categorical_crossentropy'
+weighted_categorical_crossentropy3 = partial(w_categorical_crossentropy, weights=w_array3)
+weighted_categorical_crossentropy3.__name__ = 'w_categorical_crossentropy'
+
+w_array5 = np.array(
+    [[1.0, 2.0, 4.0, 9.0, 16.0],
+     [2.0, 1.0, 2.0, 4.0, 9.0],
+     [4.0, 2.0, 1.0, 2.0, 4.0],
+     [9.0, 4.0, 2.0, 1.0, 2.0],
+     [16.0, 9.0, 4.0, 2.0, 1.0]]
+)
+weighted_categorical_crossentropy5 = partial(w_categorical_crossentropy, weights=w_array5)
+weighted_categorical_crossentropy5.__name__ = 'w_categorical_crossentropy'

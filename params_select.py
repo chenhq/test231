@@ -14,7 +14,7 @@ from index_components import sz50, hs300, zz500
 import uuid
 import seaborn as snb
 snb.set()
-from loss import weighted_categorical_crossentropy
+from loss import *
 from functools import partial
 
 try:
@@ -31,7 +31,7 @@ if __name__ == '__main__':
         'epochs': hp.choice('epochs', [100, 200, 300, 400, 500]),  # [100, 200, 500, 1000, 1500, 2000]
         'activation': hp.choice('activation', ['relu', 'sigmoid', 'tanh', 'linear']),
         # for class
-        'activation_last': hp.choice('activation', ['softmax']),
+        'activation_last': hp.choice('activation_last', ['softmax']),
         # for regression
         # 'activation_last': hp.choice('activation', [None, 'linear']),
         'shuffle': hp.choice('shuffle', [False, True]),
@@ -60,25 +60,44 @@ if __name__ == '__main__':
     # }
     # construct_feature_func = partial(construct_features1, params=params, test=False)
 
-    params = {
-        'ma': 5,
-        'n_std': 0.3,
-        'std_window': 30,
-        'vol_window': 15
-    }
-    construct_feature_func = partial(construct_features2, params=params, test=False)
+    # params = {
+    #     'ma': 5,
+    #     'n_std': 0.3,
+    #     'std_window': 30,
+    #     'vol_window': 15
+    # }
+    # construct_feature_func = partial(construct_features2, params=params, test=False)
 
-    params = {
-        'std_window': 40,
-        'vol_window': 15,
-        'max_return_threshold': 3,
-        'return_per_count_threshold': 0.3,
-        'withdraw_threshold': 2,
-        'minimum_period': 5
-    }
-    construct_feature_func = partial(construct_features3, params=params, test=False)
+    # params = {
+    #     'std_window': 40,
+    #     'vol_window': 15,
+    #     'max_return_threshold': 3,
+    #     'return_per_count_threshold': 0.3,
+    #     'withdraw_threshold': 2,
+    #     'minimum_period': 5
+    # }
+    # construct_feature_func = partial(construct_features3, params=params, test=False)
 
-    data_set, reverse_func = get_data(file_name="../data/cs_market.csv", stks=zz500[:50],
+    params_list = []
+    func_list = []
+
+    kline_params = {
+        'window': 60,
+    }
+    params_list.append(kline_params)
+    func_list.append(features_kline)
+
+    label_by_ma_price_params = {
+        'window': 250,
+        'next_ma_window': 3,
+        'quantile_list': [0, 0.1, 0.3, 0.7, 0.9, 1]
+    }
+    params_list.append(label_by_ma_price_params)
+    func_list.append(label_by_ma_price)
+
+    construct_feature_func = partial(construct_features, params_list=params_list, func_list=func_list, test=False)
+
+    data_set, reverse_func = get_data(file_name="~/cs_market.csv", stks=zz500[:50],
                                       construct_feature_func=construct_feature_func,
                                       split_dates=["2016-01-01", "2017-01-01"])
 
@@ -86,7 +105,8 @@ if __name__ == '__main__':
 
     performance_func = performance_factory(reverse_func,
                                            performance_types=['Y0', 'Y', 'returns', 'cum_returns', 'annual_return',
-                                                              'sharpe_ratio'])
+                                                              'sharpe_ratio'],
+                                           mid_type=2)
 
     function = "params_select"
     identity = str(uuid.uuid1())
@@ -94,7 +114,7 @@ if __name__ == '__main__':
 
     # loss
     # loss = 'categorical_crossentropy'
-    loss = weighted_categorical_crossentropy
+    loss = weighted_categorical_crossentropy5
     objective_func = construct_objective(data_set, target_field='label', namespace=namespace,
                                          performance_func=performance_func, measure='sharpe_ratio',
                                          include_test_data=True, shuffle_test=False,
