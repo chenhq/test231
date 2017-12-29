@@ -29,7 +29,7 @@ if __name__ == '__main__':
     default_space = {
         'time_steps': hp.choice('time_steps', [32, 64]),
         'batch_size': hp.choice('batch_size', [64, 128]),
-        'epochs': hp.choice('epochs', [5]),  # 100, 200, 300, 400, 500]),  # [100, 200, 500, 1000, 1500, 2000]
+        'epochs': hp.choice('epochs', [100, 200, 300, 400, 500]),  # [100, 200, 500, 1000, 1500, 2000]
         'activation': hp.choice('activation', ['relu', 'sigmoid', 'tanh', 'linear']),
         # for class
         'activation_last': hp.choice('activation_last', ['softmax']),
@@ -104,9 +104,16 @@ if __name__ == '__main__':
     params_list.append(ma_params)
     func_list.append(ma)
 
+
+    kline_params = {
+        'window': 60,
+    }
+    params_list.append(kline_params)
+    func_list.append(features_kline)
+
     construct_feature_func = partial(construct_features, params_list=params_list, func_list=func_list, test=False)
 
-    data_set, reverse_func = get_data(file_name="~/cs_market.csv", stks=zz500[:50],
+    data_set, reverse_func = get_data(file_name="E:\market_data/cs_market.csv", stks=zz500[200:201],
                                       construct_feature_func=construct_feature_func,
                                       split_dates=["2016-01-01", "2017-01-01"])
 
@@ -115,7 +122,7 @@ if __name__ == '__main__':
     performance_func = performance_factory(reverse_func,
                                            performance_types=['Y0', 'Y', 'returns', 'cum_returns', 'annual_return',
                                                               'sharpe_ratio'],
-                                           mid_type=2)
+                                           mid_type=2, epsilon=1.5)
 
     function = "params_select"
     identity = str(uuid.uuid1())
@@ -132,7 +139,7 @@ if __name__ == '__main__':
     # loss = 'categorical_crossentropy'
     loss = weighted_categorical_crossentropy5
     objective_func = construct_objective(data_set, target_field='label', namespace=namespace,
-                                         performance_func=performance_func, measure='loss',
+                                         performance_func=performance_func, measure='annual_return',
                                          include_test_data=True, shuffle_test=False,
                                          loss=loss)
 

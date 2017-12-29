@@ -28,7 +28,7 @@ if __name__ == '__main__':
 
     construct_feature_func = partial(construct_features, params_list=params_list, func_list=func_list, test=True)
 
-    data_set, reverse_func = get_data(file_name="~/cs_market.csv", stks=zz500[200:201],
+    data_set, reverse_func = get_data(file_name="E:\market_data/cs_market.csv", stks=zz500[200:201],
                                       construct_feature_func=construct_feature_func,
                                       split_dates=["2016-01-01", "2017-01-01"])
 
