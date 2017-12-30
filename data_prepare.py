@@ -133,7 +133,7 @@ def reform_X_Y(data, timesteps, target_field='label'):
 # "../data/cs_market.csv"
 # "~/cs_market.csv"
 # "E:\market_data/cs_market.csv"
-def get_data(file_name, stks, construct_feature_func=construct_features1, split_dates=["2016-01-01", "2017-01-01"]):
+def get_data(file_name, stks, construct_feature_func=construct_features1, split_dates=["2014-01-01", "2016-01-01"]):
     market = pd.read_csv(file_name, parse_dates=["date"], dtype={"code": str})
     all_ohlcv = market.drop(["Unnamed: 0", "total_turnover", "limit_up", "limit_down"], axis=1)
     all_ohlcv = all_ohlcv.set_index(['code', 'date']).sort_index()

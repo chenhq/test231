@@ -10,7 +10,7 @@ from objective import construct_objective
 from data_prepare import get_data
 from feature.construct_feature import *
 from hyperopt import fmin, tpe, hp, STATUS_OK, Trials, partial, rand, space_eval
-from index_components import sz50, hs300, zz500
+from index_components import sz50, hs300, zz500, zz500_t10
 import uuid
 import seaborn as snb
 import os
@@ -37,9 +37,9 @@ if __name__ == '__main__':
         # 'activation_last': hp.choice('activation', [None, 'linear']),
         'shuffle': hp.choice('shuffle', [False, True]),
 
-        'units1': hp.choice('units1', [128, 256, 512]),
-        'units2': hp.choice('units2', [256, 512, 1024]),
-        'units3': hp.choice('units3', [128, 256, 512]),
+        'units1': hp.choice('units1', [64, 128, 256, 512]),
+        'units2': hp.choice('units2', [128, 256, 512, 1024]),
+        'units3': hp.choice('units3', [64, 128, 256, 512]),
 
         'is_BN_1': hp.choice('is_BN_1', [False, True]),
         'is_BN_2': hp.choice('is_BN_2', [False, True]),
@@ -82,20 +82,14 @@ if __name__ == '__main__':
     params_list = []
     func_list = []
 
+    # k line
     kline_params = {
         'window': 60,
     }
     params_list.append(kline_params)
     func_list.append(features_kline)
 
-    label_by_ma_price_params = {
-        'window': 250,
-        'next_ma_window': 3,
-        'quantile_list': [0, 0.1, 0.3, 0.7, 0.9, 1]
-    }
-    params_list.append(label_by_ma_price_params)
-    func_list.append(label_by_ma_price)
-
+    # ma
     ma_params = {
         'ma_list': [1, 2, 3, 5, 8, 13, 21, 34, 55],
         'window': 256,
@@ -104,19 +98,22 @@ if __name__ == '__main__':
     params_list.append(ma_params)
     func_list.append(ma)
 
-
-    kline_params = {
-        'window': 60,
+    # label
+    label_by_ma_price_params = {
+        'window': 250,
+        'next_ma_window': 3,
+        'quantile_list': [0, 0.1, 0.3, 0.7, 0.9, 1]
     }
-    params_list.append(kline_params)
-    func_list.append(features_kline)
+    params_list.append(label_by_ma_price_params)
+    func_list.append(label_by_ma_price)
 
     construct_feature_func = partial(construct_features, params_list=params_list, func_list=func_list, test=False)
 
-    data_set, reverse_func = get_data(file_name="E:\market_data/cs_market.csv", stks=zz500[200:201],
+    data_set, reverse_func = get_data(file_name="~/cs_market.csv", stks=zz500_t10[1:2],
                                       construct_feature_func=construct_feature_func,
-                                      split_dates=["2016-01-01", "2017-01-01"])
+                                      split_dates=["2014-01-01", "2016-01-01"])
 
+    print(data_set)
     space = default_space
 
     performance_func = performance_factory(reverse_func,
