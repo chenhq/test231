@@ -113,7 +113,6 @@ if __name__ == '__main__':
                                       construct_feature_func=construct_feature_func,
                                       split_dates=["2014-01-01", "2016-01-01"])
 
-    print(data_set)
     space = default_space
 
     performance_func = performance_factory(reverse_func,
@@ -133,8 +132,8 @@ if __name__ == '__main__':
         pickle.dump(data_set, f)
 
     # loss
-    # loss = 'categorical_crossentropy'
-    loss = weighted_categorical_crossentropy5
+    loss = 'categorical_crossentropy'
+    # loss = weighted_categorical_crossentropy5
     objective_func = construct_objective(data_set, target_field='label', namespace=namespace,
                                          performance_func=performance_func, measure='annual_return',
                                          include_test_data=True, shuffle_test=False,
