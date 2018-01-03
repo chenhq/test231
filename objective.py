@@ -2,6 +2,7 @@ import seaborn as snb
 from hyperopt import hp, STATUS_OK
 from keras.initializers import glorot_uniform
 import datetime
+from loss import weighted_categorical_crossentropy3, weighted_categorical_crossentropy5
 
 from data_prepare import *
 from log_history import *
@@ -32,13 +33,11 @@ default_space = {
     'dropout': hp.choice('dropout', [0, 0.1, 0.2, 0.3, 0.4, 0.5]),
     'recurrent_dropout': hp.choice('recurrent_dropout', [0, 0.1, 0.2, 0.3, 0.4, 0.5]),
     'initializer': hp.choice('initializer', [glorot_uniform(seed=123)]),
-    # 'min_delta': hp.quniform('min_delta', 0.0002, 0.001, 0.0002),
-    # 'patience': hp.quniform('patience', 10, 100, 10),
 }
 
 
 def construct_objective(data_set, target_field, namespace, performance_func, measure,
-                        loss='categorical_crossentropy', include_test_data=False, shuffle_test=False):
+                        include_test_data=False, shuffle_test=False):
     def objective(params):
         identity = str(uuid.uuid1())
         print("time: {0}, identity: {1}, params: {2}".format(datetime.datetime.now(), identity, params))
@@ -61,6 +60,11 @@ def construct_objective(data_set, target_field, namespace, performance_func, mea
 
         X_train, Y_train = reform_X_Y(train, params['time_steps'], target_field)
         X_validate, Y_validate = reform_X_Y(validate, params['time_steps'], target_field)
+
+        # default loss
+        loss = 'categorical_crossentropy'
+        if params['loss_type'] == 'weighted_categorical_crossentropy':
+            loss = weighted_categorical_crossentropy5
 
         model = construct_lstm_model(params, X_train.shape[-1], Y_train.shape[-1], loss=loss)
         log_histroy = LogHistory(os.path.join(log_dir, 'history.pkl'))
@@ -85,7 +89,6 @@ def construct_objective(data_set, target_field, namespace, performance_func, mea
 
             to_be_predict_set['test'] = [test, X_test, Y_test]
 
-        loss_value = 0
         performances = {}
         for tag in to_be_predict_set:
             performances[tag] = model_predict(model, to_be_predict_set[tag][0], to_be_predict_set[tag][1],

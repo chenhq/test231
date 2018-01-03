@@ -7,9 +7,11 @@ from keras.initializers import glorot_uniform
 from objective import construct_objective
 from data_prepare import get_data
 from feature.construct_feature import *
-from hyperopt import hp
-from index_components import sz50, hs300, zz500
+
+
 from trial import run_a_trial
+from hyperopt import fmin, tpe, hp, STATUS_OK, Trials, partial, rand, space_eval
+from index_components import sz50, hs300, zz500, zz500_t10
 import uuid
 import seaborn as snb
 import os
@@ -35,10 +37,11 @@ if __name__ == '__main__':
         # for regression
         # 'activation_last': hp.choice('activation', [None, 'linear']),
         'shuffle': hp.choice('shuffle', [False, True]),
+        'loss_type': hp.choice('loss', ['categorical_crossentropy', 'weighted_categorical_crossentropy']),
 
-        'units1': hp.choice('units1', [128, 256, 512]),
-        'units2': hp.choice('units2', [256, 512, 1024]),
-        'units3': hp.choice('units3', [128, 256, 512]),
+        'units1': hp.choice('units1', [64, 128, 256, 512]),
+        'units2': hp.choice('units2', [128, 256, 512, 1024]),
+        'units3': hp.choice('units3', [64, 128, 256, 512]),
 
         'is_BN_1': hp.choice('is_BN_1', [False, True]),
         'is_BN_2': hp.choice('is_BN_2', [False, True]),
@@ -79,12 +82,14 @@ if __name__ == '__main__':
     params_list = []
     func_list = []
 
+    # k line
     kline_params = {
         'window': 60,
     }
     params_list.append(kline_params)
     func_list.append(features_kline)
 
+    # ma
     ma_params = {
         'ma_list': [1, 2, 3, 5, 8, 13, 21, 34, 55],
         'window': 256,
@@ -93,6 +98,7 @@ if __name__ == '__main__':
     params_list.append(ma_params)
     func_list.append(ma)
 
+    # label
     label_by_ma_price_params = {
         'window': 250,
         'next_ma_window': 3,
@@ -103,11 +109,11 @@ if __name__ == '__main__':
 
     construct_feature_func = partial(construct_features, params_list=params_list, func_list=func_list, test=False)
 
-    stks = zz500[100:110]
+    stks = zz500_t10
     print('stks: {}'.format(stks))
     data_set, reverse_func = get_data(file_name="E:\market_data/cs_market.csv", stks=stks,
                                       construct_feature_func=construct_feature_func,
-                                      split_dates=["2016-01-01", "2017-01-01"])
+                                      split_dates=["2014-01-01", "2016-01-01"])
 
     space = default_space
 
@@ -129,13 +135,12 @@ if __name__ == '__main__':
     with open(os.path.join(log_dir, 'data.pkl'), 'wb') as f:
         pickle.dump(data_set, f)
 
-    # loss
+    # # loss
     # loss = 'categorical_crossentropy'
-    loss = weighted_categorical_crossentropy5
+    # loss = weighted_categorical_crossentropy5
     objective_func = construct_objective(data_set, target_field='label', namespace=namespace,
                                          performance_func=performance_func, measure='annual_return',
-                                         include_test_data=True, shuffle_test=False,
-                                         loss=loss)
+                                         include_test_data=True, shuffle_test=False)
 
     trials_file = os.path.join(log_dir, 'trials.pkl')
 
