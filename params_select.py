@@ -2,15 +2,14 @@
 # os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"   # see issue #152
 # os.environ["CUDA_VISIBLE_DEVICES"] = ""
 
-import numpy as np
 from performance import performance_factory
-from hyperopt import Trials
 from keras.initializers import glorot_uniform
 from objective import construct_objective
 from data_prepare import get_data
 from feature.construct_feature import *
-from hyperopt import fmin, tpe, hp, STATUS_OK, Trials, partial, rand, space_eval
+from hyperopt import hp
 from index_components import sz50, hs300, zz500
+from trial import run_a_trial
 import uuid
 import seaborn as snb
 import os
@@ -49,11 +48,9 @@ if __name__ == '__main__':
         'dropout': hp.quniform('dropout', 0.3, 0.5, 0.1),
         'recurrent_dropout': hp.quniform('recurrent_dropout', 0.2, 0.5, 0.1),
         'initializer': hp.choice('initializer', [glorot_uniform(seed=123)]),
-        # 'min_delta': hp.quniform('min_delta', 0.0002, 0.001, 0.0002),
-        # 'patience': hp.quniform('patience', 10, 100, 10),
     }
 
-    # featuresx
+    # features
     # params = {
     #     'ma': 5,
     #     'std_window': 20,
@@ -88,14 +85,6 @@ if __name__ == '__main__':
     params_list.append(kline_params)
     func_list.append(features_kline)
 
-    label_by_ma_price_params = {
-        'window': 250,
-        'next_ma_window': 3,
-        'quantile_list': [0, 0.1, 0.3, 0.7, 0.9, 1]
-    }
-    params_list.append(label_by_ma_price_params)
-    func_list.append(label_by_ma_price)
-
     ma_params = {
         'ma_list': [1, 2, 3, 5, 8, 13, 21, 34, 55],
         'window': 256,
@@ -104,16 +93,19 @@ if __name__ == '__main__':
     params_list.append(ma_params)
     func_list.append(ma)
 
-
-    kline_params = {
-        'window': 60,
+    label_by_ma_price_params = {
+        'window': 250,
+        'next_ma_window': 3,
+        'quantile_list': [0, 0.1, 0.3, 0.7, 0.9, 1]
     }
-    params_list.append(kline_params)
-    func_list.append(features_kline)
+    params_list.append(label_by_ma_price_params)
+    func_list.append(label_by_ma_price)
 
     construct_feature_func = partial(construct_features, params_list=params_list, func_list=func_list, test=False)
 
-    data_set, reverse_func = get_data(file_name="E:\market_data/cs_market.csv", stks=zz500[200:201],
+    stks = zz500[100:110]
+    print('stks: {}'.format(stks))
+    data_set, reverse_func = get_data(file_name="E:\market_data/cs_market.csv", stks=stks,
                                       construct_feature_func=construct_feature_func,
                                       split_dates=["2016-01-01", "2017-01-01"])
 
@@ -122,10 +114,12 @@ if __name__ == '__main__':
     performance_func = performance_factory(reverse_func,
                                            performance_types=['Y0', 'Y', 'returns', 'cum_returns', 'annual_return',
                                                               'sharpe_ratio'],
-                                           mid_type=2, epsilon=1.5)
+                                           mid_type=2, epsilon=0.5)
 
     function = "params_select"
-    identity = str(uuid.uuid1())
+    # identity = str(uuid.uuid1())
+    identity = 'sssssss'
+    print("identity: {}".format(identity))
     namespace = function + '_' + identity
 
     log_dir = os.path.join('./', namespace)
@@ -143,8 +137,9 @@ if __name__ == '__main__':
                                          include_test_data=True, shuffle_test=False,
                                          loss=loss)
 
-    trials = Trials()
+    trials_file = os.path.join(log_dir, 'trials.pkl')
 
-    best = fmin(objective_func, space, algo=tpe.suggest, max_evals=50, trials=trials)
-    best_params = space_eval(space, best)
-    print("best_params: {}".format(best_params))
+    while True:
+        run_a_trial(trials_file, objective_func, space)
+
+
