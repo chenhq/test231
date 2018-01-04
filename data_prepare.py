@@ -52,6 +52,22 @@ def to_categorical(data, column, func):
     return data, reverse_func
 
 
+def categorical_factory(class_list):
+    def to_categorical(x):
+        cls = []
+        for i in range(len(class_list)):
+            if class_list[i] == x:
+                cls.append(1.0)
+            else:
+                cls.append(0.0)
+        return cls
+
+    def reverse_categorical(array):
+        return class_list[np.argmax(array)]
+
+    return to_categorical, reverse_categorical
+
+
 def split_data_by_sample(data, split_dict, minimum_size):
     result = {}
     length = len(data)
@@ -133,7 +149,20 @@ def reform_X_Y(data, timesteps, target_field='label'):
 # "../data/cs_market.csv"
 # "~/cs_market.csv"
 # "E:\market_data/cs_market.csv"
-def get_data(file_name, stks, construct_feature_func=construct_features1, split_dates=["2014-01-01", "2016-01-01"]):
+def get_data2(file_name, stks):
+    market = pd.read_csv(file_name, parse_dates=["date"], dtype={"code": str})
+    all_ohlcv = market.drop(["Unnamed: 0", "total_turnover", "limit_up", "limit_down"], axis=1)
+    all_ohlcv = all_ohlcv.set_index(['code', 'date']).sort_index()
+    idx_slice = pd.IndexSlice
+    stk_ohlcv_list = []
+    for stk in all_ohlcv.index.get_level_values('code').unique():
+        if stk in stks:
+            stk_ohlcv = all_ohlcv.loc[idx_slice[stk, :], idx_slice[:]]
+            stk_ohlcv_list.append(stk_ohlcv)
+    return stk_ohlcv_list
+
+
+def get_data(file_name, stks, construct_feature_func=construct_features1, split_dates=["2016-01-01", "2017-01-01"]):
     market = pd.read_csv(file_name, parse_dates=["date"], dtype={"code": str})
     all_ohlcv = market.drop(["Unnamed: 0", "total_turnover", "limit_up", "limit_down"], axis=1)
     all_ohlcv = all_ohlcv.set_index(['code', 'date']).sort_index()

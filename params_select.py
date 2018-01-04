@@ -5,7 +5,7 @@
 from performance import performance_factory
 from keras.initializers import glorot_uniform
 from objective import construct_objective
-from data_prepare import get_data
+from data_prepare import get_data2
 from feature.construct_feature import *
 
 
@@ -15,6 +15,7 @@ from index_components import sz50, hs300, zz500, zz500_t10
 import uuid
 import seaborn as snb
 import os
+from data_prepare import *
 snb.set()
 from loss import *
 from functools import partial
@@ -25,102 +26,86 @@ except:
     import pickle
 
 
-if __name__ == '__main__':
-
-    default_space = {
-        'time_steps': hp.choice('time_steps', [32, 64]),
-        'batch_size': hp.choice('batch_size', [64, 128]),
-        'epochs': hp.choice('epochs', [100, 200, 300, 400, 500]),  # [100, 200, 500, 1000, 1500, 2000]
-        'activation': hp.choice('activation', ['relu', 'sigmoid', 'tanh', 'linear']),
-        # for class
-        'activation_last': hp.choice('activation_last', ['softmax']),
-        # for regression
-        # 'activation_last': hp.choice('activation', [None, 'linear']),
-        'shuffle': hp.choice('shuffle', [False, True]),
-        'loss_type': hp.choice('loss', ['categorical_crossentropy', 'weighted_categorical_crossentropy']),
-
-        'units1': hp.choice('units1', [64, 128, 256, 512]),
-        'units2': hp.choice('units2', [128, 256, 512, 1024]),
-        'units3': hp.choice('units3', [64, 128, 256, 512]),
-
-        'is_BN_1': hp.choice('is_BN_1', [False, True]),
-        'is_BN_2': hp.choice('is_BN_2', [False, True]),
-        'is_BN_3': hp.choice('is_BN_3', [False, True]),
-
-        'lr': hp.loguniform('lr', np.log(0.0001), np.log(0.01)),
-        'dropout': hp.quniform('dropout', 0.3, 0.5, 0.1),
-        'recurrent_dropout': hp.quniform('recurrent_dropout', 0.2, 0.5, 0.1),
-        'initializer': hp.choice('initializer', [glorot_uniform(seed=123)]),
-    }
-
-    # features
-    # params = {
-    #     'ma': 5,
-    #     'std_window': 20,
-    #     'vol_window': 15
-    # }
-    # construct_feature_func = partial(construct_features1, params=params, test=False)
-
-    # params = {
-    #     'ma': 5,
-    #     'n_std': 0.3,
-    #     'std_window': 30,
-    #     'vol_window': 15
-    # }
-    # construct_feature_func = partial(construct_features2, params=params, test=False)
-
-    # params = {
-    #     'std_window': 40,
-    #     'vol_window': 15,
-    #     'max_return_threshold': 3,
-    #     'return_per_count_threshold': 0.3,
-    #     'withdraw_threshold': 2,
-    #     'minimum_period': 5
-    # }
-    # construct_feature_func = partial(construct_features3, params=params, test=False)
-
+def features_objective(params, ohlcv_list):
     params_list = []
     func_list = []
 
     # k line
-    kline_params = {
-        'window': 60,
-    }
+    kline_params = params['kline']
     params_list.append(kline_params)
     func_list.append(features_kline)
 
     # ma
-    ma_params = {
-        'ma_list': [1, 2, 3, 5, 8, 13, 21, 34, 55],
-        'window': 256,
-        'price': 'close'
-    }
+    ma_params = params['ma']
     params_list.append(ma_params)
     func_list.append(ma)
 
     # label
-    label_by_ma_price_params = {
-        'window': 250,
-        'next_ma_window': 3,
-        'quantile_list': [0, 0.1, 0.3, 0.7, 0.9, 1]
-    }
+    label_by_ma_price_params = params['label_by_ma_price']
     params_list.append(label_by_ma_price_params)
     func_list.append(label_by_ma_price)
 
     construct_feature_func = partial(construct_features, params_list=params_list, func_list=func_list, test=False)
+    stk_features_list = construct_features_for_stocks(ohlcv_list, construct_feature_func)
+    return stk_features_list
 
-    stks = zz500_t10
-    print('stks: {}'.format(stks))
-    data_set, reverse_func = get_data(file_name="E:\market_data/cs_market.csv", stks=stks,
-                                      construct_feature_func=construct_feature_func,
-                                      split_dates=["2016-01-01", "2017-01-01"])
 
-    space = default_space
+lstm_space = {
+    'time_steps': hp.choice('time_steps', [32, 64]),
+    'batch_size': hp.choice('batch_size', [64, 128]),
+    'epochs': hp.choice('epochs', [100, 200, 300, 400, 500]),  # [100, 200, 500, 1000, 1500, 2000]
+    'activation': hp.choice('activation', ['relu', 'sigmoid', 'tanh', 'linear']),
+    # for class
+    'activation_last': hp.choice('activation_last', ['softmax']),
+    # for regression
+    # 'activation_last': hp.choice('activation', [None, 'linear']),
+    'shuffle': hp.choice('shuffle', [False, True]),
+    'loss_type': hp.choice('loss', ['categorical_crossentropy', 'weighted_categorical_crossentropy']),
+
+    'units1': hp.choice('units1', [64, 128, 256, 512]),
+    'units2': hp.choice('units2', [128, 256, 512, 1024]),
+    'units3': hp.choice('units3', [64, 128, 256, 512]),
+
+    'is_BN_1': hp.choice('is_BN_1', [False, True]),
+    'is_BN_2': hp.choice('is_BN_2', [False, True]),
+    'is_BN_3': hp.choice('is_BN_3', [False, True]),
+
+    'lr': hp.loguniform('lr', np.log(0.0001), np.log(0.01)),
+    'dropout': hp.quniform('dropout', 0.3, 0.5, 0.1),
+    'recurrent_dropout': hp.quniform('recurrent_dropout', 0.2, 0.5, 0.1),
+    'initializer': hp.choice('initializer', [glorot_uniform(seed=123)]),
+}
+
+features_space = {
+    'kline': [
+        hp.choice('window', [30, 60, 120, 240, 480, 960])
+    ],
+    'ma': [
+        hp.choice('ma_list', [[1, 2, 3, 5, 8, 13, 21, 34, 55]]),
+        hp.choice('window', [256]),
+        hp.choice('price', ['close'])
+    ],
+    'label_by_ma_price': [
+        hp.choice('window', [256]),
+        hp.choice('next_ma_window', [3, 5, 10]),
+        hp.choice('quantile_list', [[0, 0.1, 0.3, 0.7, 0.9, 1]])
+    ]
+}
+
+space = {
+    'feature': features_space,
+    'lstm': lstm_space
+}
+
+
+if __name__ == '__main__':
+    stk_ohlcv_list = get_data2(file_name="E:\market_data/cs_market.csv", stks=zz500_t10)
+    
 
     performance_func = performance_factory(reverse_func,
-                                           performance_types=['Y0', 'Y', 'returns', 'cum_returns', 'annual_return',
-                                                              'sharpe_ratio'],
-                                           mid_type=2, epsilon=0.5)
+                                               performance_types=['Y0', 'Y', 'returns', 'cum_returns', 'annual_return',
+                                                                  'sharpe_ratio'],
+                                               mid_type=2, epsilon=0.5)
 
     function = "params_select"
     # identity = str(uuid.uuid1())
@@ -148,3 +133,31 @@ if __name__ == '__main__':
         run_a_trial(trials_file, objective_func, space)
 
 
+
+
+
+        # features
+        # params = {
+        #     'ma': 5,
+        #     'std_window': 20,
+        #     'vol_window': 15
+        # }
+        # construct_feature_func = partial(construct_features1, params=params, test=False)
+
+        # params = {
+        #     'ma': 5,
+        #     'n_std': 0.3,
+        #     'std_window': 30,
+        #     'vol_window': 15
+        # }
+        # construct_feature_func = partial(construct_features2, params=params, test=False)
+
+        # params = {
+        #     'std_window': 40,
+        #     'vol_window': 15,
+        #     'max_return_threshold': 3,
+        #     'return_per_count_threshold': 0.3,
+        #     'withdraw_threshold': 2,
+        #     'minimum_period': 5
+        # }
+        # construct_feature_func = partial(construct_features3, params=params, test=False)

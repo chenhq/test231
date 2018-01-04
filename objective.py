@@ -125,3 +125,8 @@ def construct_objective(data_set, target_field, namespace, performance_func, mea
         return {'loss': loss_value, 'status': STATUS_OK}
 
     return objective
+
+
+def feature_objective(params):
+    pass
+
