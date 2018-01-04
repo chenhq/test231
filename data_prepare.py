@@ -3,7 +3,6 @@ import random
 
 import numpy as np
 import pandas as pd
-from feature.construct_feature import construct_features1
 
 
 def construct_features_for_stocks(ohlcv_list, construct_features_func, processes=0):
@@ -108,7 +107,11 @@ def split_data_set_by_date(features_list, dates, minimum_size=64, processes=0):
 
     pool.close()
     pool.join()
-    return train_set, validate_set, test_set
+    train = pd.concat(train_set, axis=0)
+    validate = pd.concat(validate_set, axis=0)
+    test = pd.concat(test_set, axis=0)
+    data_set = {'train': train, 'validate': validate, 'test': test}
+    return data_set
 
 
 def split_data_by_date(data, dates, minimum_size=1):
@@ -149,7 +152,7 @@ def reform_X_Y(data, timesteps, target_field='label'):
 # "../data/cs_market.csv"
 # "~/cs_market.csv"
 # "E:\market_data/cs_market.csv"
-def get_data2(file_name, stks):
+def get_data(file_name, stks):
     market = pd.read_csv(file_name, parse_dates=["date"], dtype={"code": str})
     all_ohlcv = market.drop(["Unnamed: 0", "total_turnover", "limit_up", "limit_down"], axis=1)
     all_ohlcv = all_ohlcv.set_index(['code', 'date']).sort_index()
@@ -161,28 +164,4 @@ def get_data2(file_name, stks):
             stk_ohlcv_list.append(stk_ohlcv)
     return stk_ohlcv_list
 
-
-def get_data(file_name, stks, construct_feature_func=construct_features1, split_dates=["2016-01-01", "2017-01-01"]):
-    market = pd.read_csv(file_name, parse_dates=["date"], dtype={"code": str})
-    all_ohlcv = market.drop(["Unnamed: 0", "total_turnover", "limit_up", "limit_down"], axis=1)
-    all_ohlcv = all_ohlcv.set_index(['code', 'date']).sort_index()
-    idx_slice = pd.IndexSlice
-    stk_ohlcv_list = []
-    for stk in all_ohlcv.index.get_level_values('code').unique():
-        if stk in stks:
-            stk_ohlcv = all_ohlcv.loc[idx_slice[stk, :], idx_slice[:]]
-            stk_ohlcv_list.append(stk_ohlcv)
-    stk_features_list = construct_features_for_stocks(stk_ohlcv_list, construct_feature_func)
-    flatten_stk_features_list, reverse_func = to_categorical(pd.concat(stk_features_list, axis=0), 'label',
-                                                             categorical_func_factory)
-    new_stk_features_list = []
-    for stk in flatten_stk_features_list.index.get_level_values('code').unique():
-        new_stk_features = flatten_stk_features_list.loc[idx_slice[stk, :], idx_slice[:]]
-        new_stk_features_list.append(new_stk_features)
-    train_set, validate_set, test_set = split_data_set_by_date(new_stk_features_list, split_dates, minimum_size=64)
-    train = pd.concat(train_set, axis=0)
-    validate = pd.concat(validate_set, axis=0)
-    test = pd.concat(test_set, axis=0)
-    data_set = {'train': train, 'validate': validate, 'test': test}
-    return data_set, reverse_func
 

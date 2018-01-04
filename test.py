@@ -28,9 +28,9 @@ if __name__ == '__main__':
 
     # loss = 'categorical_crossentropy'
     loss = weighted_categorical_crossentropy3
-    objective_func = construct_objective(data_set, target_field='label', namespace=namespace,
-                                         performance_func=performance_func, measure='sharpe_ratio',
-                                         loss=loss, include_test_data=True, shuffle_test=False)
+    objective_func = lstm_objective(data_set, target_field='label', namespace=namespace,
+                                    performance_func=performance_func, measure='sharpe_ratio',
+                                    loss=loss, include_test_data=True, shuffle_test=False)
 
     trials = Trials()
 

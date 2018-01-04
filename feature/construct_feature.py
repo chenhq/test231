@@ -2,6 +2,7 @@ import pandas as pd
 from talib.abstract import *
 import numpy as np
 from target.valid_wave.valid_wave import tag_wave_direction
+from data_prepare import categorical_factory
 
 
 def construct_features1(ohlcv, params, test=False):
@@ -135,6 +136,9 @@ def label_by_ma_price(ohlcv, params, test=False, epsilon=0.0001):
                (price_gap < price_gap.rolling(params['window']).quantile(quantile_list[i+1]).bfill() + epsilon)
         label.loc[cond, 'label'] = i
 
+    class_list = [i for i in range(len(params['quantile_list']))]
+    to_categorical, _ = categorical_factory(class_list)
+    label['label'] = label['label'].copy().map(to_categorical)
     if test:
         return pd.concat([label, ohlcv], axis=1)
     else:

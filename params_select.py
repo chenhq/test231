@@ -4,11 +4,7 @@
 
 from performance import performance_factory
 from keras.initializers import glorot_uniform
-from objective import construct_objective
-from data_prepare import get_data2
-from feature.construct_feature import *
-
-
+from objective import objective
 from trial import run_a_trial
 from hyperopt import fmin, tpe, hp, STATUS_OK, Trials, partial, rand, space_eval
 from index_components import sz50, hs300, zz500, zz500_t10
@@ -18,36 +14,11 @@ import os
 from data_prepare import *
 snb.set()
 from loss import *
-from functools import partial
 
 try:
     import cPpickle as pickle
 except:
     import pickle
-
-
-def features_objective(params, ohlcv_list):
-    params_list = []
-    func_list = []
-
-    # k line
-    kline_params = params['kline']
-    params_list.append(kline_params)
-    func_list.append(features_kline)
-
-    # ma
-    ma_params = params['ma']
-    params_list.append(ma_params)
-    func_list.append(ma)
-
-    # label
-    label_by_ma_price_params = params['label_by_ma_price']
-    params_list.append(label_by_ma_price_params)
-    func_list.append(label_by_ma_price)
-
-    construct_feature_func = partial(construct_features, params_list=params_list, func_list=func_list, test=False)
-    stk_features_list = construct_features_for_stocks(ohlcv_list, construct_feature_func)
-    return stk_features_list
 
 
 lstm_space = {
@@ -86,30 +57,25 @@ features_space = {
         hp.choice('price', ['close'])
     ],
     'label_by_ma_price': [
-        hp.choice('window', [256]),
+        hp.choice('label_window', [256]),
         hp.choice('next_ma_window', [3, 5, 10]),
         hp.choice('quantile_list', [[0, 0.1, 0.3, 0.7, 0.9, 1]])
     ]
 }
 
 space = {
-    'feature': features_space,
-    'lstm': lstm_space
+    'features': features_space,
+    'lstm': lstm_space,
+    'split_dates': ["2016-01-01", "2017-01-01"]
 }
 
 
 if __name__ == '__main__':
-    stk_ohlcv_list = get_data2(file_name="E:\market_data/cs_market.csv", stks=zz500_t10)
-    
-
-    performance_func = performance_factory(reverse_func,
-                                               performance_types=['Y0', 'Y', 'returns', 'cum_returns', 'annual_return',
-                                                                  'sharpe_ratio'],
-                                               mid_type=2, epsilon=0.5)
+    ohlcv_list = get_data(file_name="~/cs_market.csv", stks=zz500_t10)
 
     function = "params_select"
     # identity = str(uuid.uuid1())
-    identity = 'sssssss'
+    identity = 'test02'
     print("identity: {}".format(identity))
     namespace = function + '_' + identity
 
@@ -117,15 +83,13 @@ if __name__ == '__main__':
     if not os.path.exists(log_dir):
         os.makedirs(log_dir)
 
-    with open(os.path.join(log_dir, 'data.pkl'), 'wb') as f:
-        pickle.dump(data_set, f)
+    with open(os.path.join(log_dir, 'stk_ohlcv_list.pkl'), 'wb') as f:
+        pickle.dump(ohlcv_list, f)
 
     # # loss
     # loss = 'categorical_crossentropy'
     # loss = weighted_categorical_crossentropy5
-    objective_func = construct_objective(data_set, target_field='label', namespace=namespace,
-                                         performance_func=performance_func, measure='annual_return',
-                                         include_test_data=True, shuffle_test=False)
+    objective_func = partial(objective, ohlcv_list=ohlcv_list, namespace=namespace)
 
     trials_file = os.path.join(log_dir, 'trials.pkl')
 
