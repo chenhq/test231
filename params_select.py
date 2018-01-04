@@ -113,7 +113,7 @@ if __name__ == '__main__':
     print('stks: {}'.format(stks))
     data_set, reverse_func = get_data(file_name="E:\market_data/cs_market.csv", stks=stks,
                                       construct_feature_func=construct_feature_func,
-                                      split_dates=["2014-01-01", "2016-01-01"])
+                                      split_dates=["2016-01-01", "2017-01-01"])
 
     space = default_space
 
