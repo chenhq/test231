@@ -23,9 +23,9 @@ if __name__ == '__main__':
     function = "features_select"
     identity = str(uuid.uuid1())
     namespace = function + '_' + identity
-    objective_func = construct_objective(data_set, target_field='label', namespace=namespace,
-                                         performance_func=performance_func, measure='sharpe_ratio',
-                                         include_test_data=True, shuffle_test=True)
+    objective_func = lstm_objective(data_set, target_field='label', namespace=namespace,
+                                    performance_func=performance_func, measure='sharpe_ratio',
+                                    include_test_data=True, shuffle_test=True)
 
     params = {'batch_size': 64,
               'dropout': 0.5,

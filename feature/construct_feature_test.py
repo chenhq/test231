@@ -54,7 +54,7 @@ if __name__ == '__main__':
         'price': 'close'
     }
     params_list.append(ma_params)
-    func_list.append(ma)
+    func_list.append(feature_ma)
 
     label_by_ma_price_params = {
         'window': 250,
