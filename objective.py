@@ -161,16 +161,16 @@ def objective(params, ohlcv_list, namespace):
     params_file = os.path.join(sub_namespace, 'params.pkl')
     pickle.dump(params, open(params_file, 'wb'))
 
-    stk_features_list = features_objective(params['features'], ohlcv_list)
+    features_list = features_objective(params['features'], ohlcv_list)
     features_list_file = os.path.join(sub_namespace, 'features_list.pkl')
-    pickle.dump(stk_features_list, open(features_list_file, 'wb'))
+    pickle.dump(features_list, open(features_list_file, 'wb'))
 
-    data_set = split_data_set_by_date(stk_features_list, params['split_dates'], minimum_size=64)
+    data_set = split_data_set_by_date(features_list, params['split_dates'], minimum_size=64)
     data_set_file = os.path.join(sub_namespace, 'data_set.pkl')
     pickle.dump(data_set, open(data_set_file, 'wb'))
 
     quantile_list = params['features']['label_by_ma_price']['quantile_list']
-    class_list = [i for i in range(len(quantile_list))]
+    class_list = [i for i in range(len(quantile_list)-1)]
     nb_class = len(class_list)
     _, reverse_categorical = categorical_factory(class_list)
     performance_func = performance_factory(reverse_categorical,
