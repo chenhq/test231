@@ -59,7 +59,7 @@ features_space = {
     },
     'label_by_ma_price': {
         'window': hp.choice('label_window', [60, 120, 240, 480, 960]),
-        'next_ma_window': hp.choice('next_ma_window', [2, 3, 5, 8, 13]),
+        'next_ma_window': hp.choice('next_ma_window', [2, 3, 5, 8, 13, 21, 34, 55]),
         'quantile_list': hp.choice('quantile_list', [[0, 0.1, 0.3, 0.7, 0.9, 1],
                                                      [0, 0.2, 0.4, 0.6, 0.8, 1],
                                                      [0, 0.15, 0.3, 0.7, 0.85, 1],
