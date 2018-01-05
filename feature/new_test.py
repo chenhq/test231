@@ -1,6 +1,6 @@
 from functools import partial
 from data_prepare import get_data
-from feature.construct_feature import ma, label_by_ma_price, construct_features
+from feature.construct_feature import feature_ma, label_by_ma_price, construct_features
 from index_components import zz500
 import matplotlib.pylab as plt
 import seaborn as sbn
@@ -16,7 +16,7 @@ if __name__ == '__main__':
         'price': 'close'
     }
     params_list.append(ma_params)
-    func_list.append(ma)
+    func_list.append(feature_ma)
 
     label_by_ma_price_params = {
         'window': 250,

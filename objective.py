@@ -3,7 +3,7 @@ from hyperopt import hp, STATUS_OK
 from keras.initializers import glorot_uniform
 import datetime
 from loss import weighted_categorical_crossentropy3, weighted_categorical_crossentropy5
-from feature.construct_feature import features_kline, ma, label_by_ma_price, construct_features
+from feature.construct_feature import feature_kline, feature_ma, label_by_ma_price, construct_features
 from functools import partial
 from performance import *
 
@@ -41,14 +41,13 @@ default_space = {
 
 def lstm_objective(params, data_set, target_field, namespace, performance_func, measure,
                    include_test_data=False, shuffle_test=False):
-    identity = str(uuid.uuid1())
-    print("time: {0}, identity: {1}, params: {2}".format(datetime.datetime.now(), identity, params))
 
-    log_dir = os.path.join(namespace, identity)
-    if not os.path.exists(log_dir):
-        os.makedirs(log_dir)
+    print("time: {0}, namespace: {1}, params: {2}".format(datetime.datetime.now(), namespace, params))
 
-    params_file = os.path.join(log_dir, "params.pkl")
+    if not os.path.exists(namespace):
+        os.makedirs(namespace)
+
+    params_file = os.path.join(namespace, "params.pkl")
     with open(params_file, 'wb') as output:
         pickle.dump(params, output)
 
@@ -69,7 +68,7 @@ def lstm_objective(params, data_set, target_field, namespace, performance_func, 
         loss = weighted_categorical_crossentropy5
 
     model = construct_lstm_model(params, X_train.shape[-1], Y_train.shape[-1], loss=loss)
-    log_histroy = LogHistory(os.path.join(log_dir, 'history.pkl'))
+    log_histroy = LogHistory(os.path.join(namespace, 'history.pkl'))
     # early_stop = EarlyStopping(monitor='val_loss', min_delta=params['min_delta'], patience=params['patience'],
     #                            verbose=2, mode='auto')
     model.fit(X_train, Y_train,
@@ -94,7 +93,7 @@ def lstm_objective(params, data_set, target_field, namespace, performance_func, 
     performances = {}
     for tag in to_be_predict_set:
         performances[tag] = model_predict(model, to_be_predict_set[tag][0], to_be_predict_set[tag][1],
-                                          tag, log_dir, performance_func)
+                                          tag, namespace, performance_func)
         scores = model.evaluate(to_be_predict_set[tag][1], to_be_predict_set[tag][2], verbose=0)
         performances[tag]['loss'] = scores[0]
         performances[tag]['metrics'] = scores[0]
@@ -120,10 +119,10 @@ def lstm_objective(params, data_set, target_field, namespace, performance_func, 
             X_validate_shuffle, Y_validate_shuffle = reform_X_Y(validate_shuffle, params['time_steps'],
                                                                 target_field)
             tag = "shuffle_" + column
-            model_predict(model, validate_shuffle, X_validate_shuffle, tag, log_dir,
+            model_predict(model, validate_shuffle, X_validate_shuffle, tag, namespace,
                           performance_func)
 
-    print("identity: {0}, loss: {1}".format(identity, loss_value))
+    print("namespace: {0}, loss: {1}".format(namespace, loss_value))
     return {'loss': loss_value, 'status': STATUS_OK}
 
 
@@ -134,12 +133,12 @@ def features_objective(params, ohlcv_list):
     # k line
     kline_params = params['kline']
     params_list.append(kline_params)
-    func_list.append(features_kline)
+    func_list.append(feature_kline)
 
     # ma
     ma_params = params['ma']
     params_list.append(ma_params)
-    func_list.append(ma)
+    func_list.append(feature_ma)
 
     # label
     label_by_ma_price_params = params['label_by_ma_price']
@@ -152,15 +151,32 @@ def features_objective(params, ohlcv_list):
 
 
 def objective(params, ohlcv_list, namespace):
-    stk_features_list = features_objective(params['feature'], ohlcv_list)
+    identity = str(uuid.uuid1())
+    print('time: {}, identity: {}, params: {}'.format(datetime.datetime.now(), identity, params))
+    sub_namespace = os.path.join(namespace, identity)
+
+    if not os.path.exists(sub_namespace):
+        os.makedirs(sub_namespace)
+
+    params_file = os.path.join(sub_namespace, 'params.pkl')
+    pickle.dump(params, open(params_file, 'wb'))
+
+    stk_features_list = features_objective(params['features'], ohlcv_list)
+    features_list_file = os.path.join(sub_namespace, 'features_list.pkl')
+    pickle.dump(stk_features_list, open(features_list_file, 'wb'))
+
     data_set = split_data_set_by_date(stk_features_list, params['split_dates'], minimum_size=64)
+    data_set_file = os.path.join(sub_namespace, 'data_set.pkl')
+    pickle.dump(data_set, open(data_set_file, 'wb'))
+
     quantile_list = params['features']['label_by_ma_price']['quantile_list']
     class_list = [i for i in range(len(quantile_list))]
+    nb_class = len(class_list)
     _, reverse_categorical = categorical_factory(class_list)
     performance_func = performance_factory(reverse_categorical,
                                            performance_types=['Y0', 'Y', 'returns', 'cum_returns', 'annual_return',
                                                               'sharpe_ratio'],
-                                           mid_type=2, epsilon=0.5)
-    return lstm_objective(params['lstm'], data_set, target_field='label', namespace=namespace,
+                                           mid_type=(nb_class-1) / 2.0, epsilon=0.6)
+    return lstm_objective(params['lstm'], data_set, target_field='label', namespace=sub_namespace,
                           performance_func=performance_func, measure='annual_return', include_test_data=True,
                           shuffle_test=False)
