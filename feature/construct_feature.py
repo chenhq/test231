@@ -133,7 +133,7 @@ def label_by_ma_price(ohlcv, params, test=False, epsilon=0.000001):
                (price_gap < price_gap.rolling(params['window']).quantile(quantile_list[i+1]).bfill() + epsilon)
         label.loc[cond, 'label'] = i
 
-    class_list = [i for i in range(len(params['quantile_list']))]
+    class_list = [i for i in range(len(params['quantile_list'])-1)]
     to_categorical, _ = categorical_factory(class_list)
     label['label'] = label['label'].copy().map(to_categorical)
     if test:
