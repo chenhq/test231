@@ -41,9 +41,6 @@ default_space = {
 
 def lstm_objective(params, data_set, target_field, namespace, performance_func, measure,
                    include_test_data=False, shuffle_test=False):
-
-    print("time: {0}, namespace: {1}, params: {2}".format(datetime.datetime.now(), namespace, params))
-
     if not os.path.exists(namespace):
         os.makedirs(namespace)
 
