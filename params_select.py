@@ -23,10 +23,11 @@ except:
 
 
 lstm_space = {
-    'time_steps': hp.choice('time_steps', [32, 64]),
-    'batch_size': hp.choice('batch_size', [64, 128]),
-    'epochs': hp.choice('epochs', [100, 200, 300, 400, 500, 800, 1200, 1500, 2000, 2500, 3000]),  # [100, 200, 500, 1000, 1500, 2000]
-    'activation': hp.choice('activation', ['relu', 'sigmoid', 'tanh', 'linear']),
+    'time_steps': hp.choice('time_steps', [64]),
+    'batch_size': hp.choice('batch_size', [64, 128, 256]),
+    'epochs': hp.choice('epochs', [100, 200, 300, 400, 500, 800]),  # [100, 200, 500, 1000, 1500, 2000]
+    # 'relu', 'sigmoid', 'tanh', 'linear'
+    'activation': hp.choice('activation', ['relu', 'sigmoid', 'tanh']),
     # for class
     'activation_last': hp.choice('activation_last', ['softmax']),
     # for regression
@@ -34,9 +35,9 @@ lstm_space = {
     'shuffle': hp.choice('shuffle', [False, True]),
     'loss_type': hp.choice('loss', ['categorical_crossentropy']), #, 'weighted_categorical_crossentropy']),
 
-    'units1': hp.choice('units1', [32, 64, 128, 256, 512]),
-    'units2': hp.choice('units2', [32, 64, 128, 256, 512]),
-    'units3': hp.choice('units3', [32, 64, 128, 256, 512]),
+    'units1': hp.choice('units1', [32, 64, 128, 256]),
+    'units2': hp.choice('units2', [32, 64, 128, 256]),
+    'units3': hp.choice('units3', [32, 64, 128, 256]),
 
     'is_BN_1': hp.choice('is_BN_1', [False, True]),
     'is_BN_2': hp.choice('is_BN_2', [False, True]),
