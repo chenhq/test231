@@ -50,7 +50,7 @@ def lstm_objective(params, data_set, target_field, namespace, performance_func, 
     model.fit(X_train, Y_train,
               batch_size=params['batch_size'],
               epochs=params['epochs'],
-              verbose=0,
+              verbose=1,
               validation_data=(X_validate, Y_validate),
               shuffle=params['shuffle'],
               callbacks=[log_histroy])  # early_stop
@@ -70,7 +70,7 @@ def lstm_objective(params, data_set, target_field, namespace, performance_func, 
     for tag in to_be_predict_set:
         performances[tag] = model_predict(model, to_be_predict_set[tag][0], to_be_predict_set[tag][1],
                                           performance_func)
-        scores = model.evaluate(to_be_predict_set[tag][1], to_be_predict_set[tag][2], verbose=0)
+        scores = model.evaluate(to_be_predict_set[tag][1], to_be_predict_set[tag][2], verbose=1)
         performances[tag]['loss'] = scores[0]
         performances[tag]['metrics'] = scores[0]
 
