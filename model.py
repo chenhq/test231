@@ -33,7 +33,7 @@ def construct_lstm_model(params, input_size, output_size, loss='categorical_cros
         model.add(BatchNormalization())
 
     model.add(LSTM(params['layer3']['units'],
-                   activation=params['activation'],
+                   activation=params['layer3']['activation'],
                    return_sequences=True,
                    dropout=params['dropout'],
                    recurrent_dropout=params['recurrent_dropout'],
