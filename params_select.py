@@ -37,19 +37,19 @@ lstm_space = {
     'loss_type': hp.choice('loss', ['categorical_crossentropy']), #, 'weighted_categorical_crossentropy']),
 
     'layer1': {
-        'unit': hp.choice('layer1_units', [32, 64, 128, 256]),
+        'units': hp.choice('layer1_units', [32, 64, 128, 256]),
         # 'relu', 'sigmoid', 'tanh', 'linear'
         'activation': hp.choice('layer1_activation', ['relu', 'sigmoid', 'tanh']),
         'is_BN': hp.choice('layer1_is_BN', [False, True]),
     },
     'layer2': {
-        'unit': hp.choice('layer2_units', [32, 64, 128, 256]),
+        'units': hp.choice('layer2_units', [32, 64, 128, 256]),
         # 'relu', 'sigmoid', 'tanh', 'linear'
         'activation': hp.choice('layer2_activation', ['relu', 'sigmoid', 'tanh']),
         'is_BN': hp.choice('layer2_is_BN', [False, True]),
     },
     'layer3': {
-        'unit': hp.choice('layer3_units', [32, 64, 128, 256]),
+        'units': hp.choice('layer3_units', [32, 64, 128, 256]),
         # 'relu', 'sigmoid', 'tanh', 'linear'
         # Loss turns into 'nan'
         # As far as I know, it's the combination of relu and softmax that causes numerical troubles,
