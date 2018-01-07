@@ -17,27 +17,6 @@ except:
     import pickle
 snb.set()
 
-default_space = {
-    'time_steps': hp.choice('time_steps', [32, 64, 128]),
-    'batch_size': hp.choice('batch_size', [64, 128]),
-    'epochs': hp.choice('epochs', [100, 200, 300, 400, 500]),  # [100, 200, 500, 1000, 1500, 2000]
-    'activation': hp.choice('activation', ['relu', 'sigmoid', 'tanh', 'linear']),
-    'shuffle': hp.choice('shuffle', [False, True]),
-
-    'units1': hp.choice('units1', [32, 64, 128, 256]),
-    'units2': hp.choice('units2', [32, 64, 128, 256]),
-    'units3': hp.choice('units3', [32, 64, 128, 256]),
-
-    'is_BN_1': hp.choice('is_BN_1', [False, True]),
-    'is_BN_2': hp.choice('is_BN_2', [False, True]),
-    'is_BN_3': hp.choice('is_BN_3', [False, True]),
-
-    'lr': hp.uniform('lr', 0.0001, 0.001),
-    'dropout': hp.choice('dropout', [0, 0.1, 0.2, 0.3, 0.4, 0.5]),
-    'recurrent_dropout': hp.choice('recurrent_dropout', [0, 0.1, 0.2, 0.3, 0.4, 0.5]),
-    'initializer': hp.choice('initializer', [glorot_uniform(seed=123)]),
-}
-
 
 def lstm_objective(params, data_set, target_field, namespace, performance_func, measure,
                    include_test_data=False, shuffle_test=False):
@@ -90,10 +69,13 @@ def lstm_objective(params, data_set, target_field, namespace, performance_func, 
     performances = {}
     for tag in to_be_predict_set:
         performances[tag] = model_predict(model, to_be_predict_set[tag][0], to_be_predict_set[tag][1],
-                                          tag, namespace, performance_func)
+                                          performance_func)
         scores = model.evaluate(to_be_predict_set[tag][1], to_be_predict_set[tag][2], verbose=0)
         performances[tag]['loss'] = scores[0]
         performances[tag]['metrics'] = scores[0]
+
+    with open(os.path.join(namespace, 'performances.pkl'), 'wb') as output:
+        pickle.dump(performances, output)
 
     if measure in ['loss']:
         loss_value = performances['validate'][measure]
