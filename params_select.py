@@ -102,8 +102,11 @@ space = {
 
 
 if __name__ == '__main__':
-    file_name = '../data/cs_market.csv'
-    ohlcv_list = get_data(file_name=file_name, stks=zz500_t10)
+    # file_name = '../data/cs_market.csv'
+    # ohlcv_list = get_data(file_name=file_name, stks=zz500_t10)
+
+    zz500 = pickle.load(open('../data/zz500.pkl', 'rb'))
+    ohlcv_list = [zz500]
 
     function = "params_select"
     # identity = str(uuid.uuid1())
