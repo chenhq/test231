@@ -26,27 +26,45 @@ lstm_space = {
     'time_steps': hp.choice('time_steps', [64]),
     'batch_size': hp.choice('batch_size', [64, 128, 256]),
     'epochs': hp.choice('epochs', [100, 200, 300, 400, 500, 800]),  # [100, 200, 500, 1000, 1500, 2000]
-    # 'relu', 'sigmoid', 'tanh', 'linear'
-    'activation': hp.choice('activation', ['relu', 'sigmoid', 'tanh']),
+
     # for class
     'activation_last': hp.choice('activation_last', ['softmax']),
     # for regression
     # 'activation_last': hp.choice('activation', [None, 'linear']),
-    'shuffle': hp.choice('shuffle', [False, True]),
+
+    #
+    'shuffle': hp.choice('shuffle', [False]),
     'loss_type': hp.choice('loss', ['categorical_crossentropy']), #, 'weighted_categorical_crossentropy']),
 
-    'units1': hp.choice('units1', [32, 64, 128, 256]),
-    'units2': hp.choice('units2', [32, 64, 128, 256]),
-    'units3': hp.choice('units3', [32, 64, 128, 256]),
-
-    'is_BN_1': hp.choice('is_BN_1', [False, True]),
-    'is_BN_2': hp.choice('is_BN_2', [False, True]),
-    'is_BN_3': hp.choice('is_BN_3', [False, True]),
+    'layer1': {
+        'unit': hp.choice('layer1_units', [32, 64, 128, 256]),
+        # 'relu', 'sigmoid', 'tanh', 'linear'
+        'activation': hp.choice('layer1_activation', ['relu', 'sigmoid', 'tanh']),
+        'is_BN': hp.choice('layer1_is_BN', [False, True]),
+    },
+    'layer2': {
+        'unit': hp.choice('layer2_units', [32, 64, 128, 256]),
+        # 'relu', 'sigmoid', 'tanh', 'linear'
+        'activation': hp.choice('layer2_activation', ['relu', 'sigmoid', 'tanh']),
+        'is_BN': hp.choice('layer2_is_BN', [False, True]),
+    },
+    'layer3': {
+        'unit': hp.choice('layer3_units', [32, 64, 128, 256]),
+        # 'relu', 'sigmoid', 'tanh', 'linear'
+        # Loss turns into 'nan'
+        # As far as I know, it's the combination of relu and softmax that causes numerical troubles,
+        # as relu can produce large positive values corresponding to very small probabilities.
+        # If you change your model to use, say, tanh instead of relu for the last dense layer,
+        # the problem will go away.
+        'activation': hp.choice('layer3_activation', ['sigmoid', 'tanh']),
+        'is_BN': hp.choice('layer3_is_BN', [False, True]),
+    },
 
     'lr': hp.loguniform('lr', np.log(0.0001), np.log(0.01)),
     'dropout': hp.quniform('dropout', 0.2, 0.5, 0.1),
     'recurrent_dropout': hp.quniform('recurrent_dropout', 0.2, 0.5, 0.1),
-    'initializer': hp.choice('initializer', [glorot_uniform(seed=123)]),
+    'kernel_initializer': hp.choice('kernel_initializer', [glorot_uniform(seed=123)]),
+    'bias_initializer': hp.choice('bias_initializer', [glorot_uniform(seed=456)]),
 }
 
 features_space = {
