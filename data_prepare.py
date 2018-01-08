@@ -59,7 +59,7 @@ def categorical_factory(class_list):
                 cls.append(1.0)
             else:
                 cls.append(0.0)
-        return cls
+        return np.array(cls)
 
     def reverse_categorical(array):
         return class_list[np.argmax(array)]
