@@ -39,13 +39,13 @@ lstm_space = {
     'layer1': {
         'units': hp.choice('layer1_units', [32, 64, 128, 256]),
         # 'relu', 'sigmoid', 'tanh', 'linear'
-        'activation': hp.choice('layer1_activation', ['tanh']),
+        # 'activation': hp.choice('layer1_activation', ['tanh']),
         'is_BN': hp.choice('layer1_is_BN', [False, True]),
     },
     'layer2': {
         'units': hp.choice('layer2_units', [32, 64, 128, 256]),
         # 'relu', 'sigmoid', 'tanh', 'linear'
-        'activation': hp.choice('layer2_activation', ['tanh']),
+        # 'activation': hp.choice('layer2_activation', ['tanh']),
         'is_BN': hp.choice('layer2_is_BN', [False, True]),
     },
     'layer3': {
@@ -56,7 +56,7 @@ lstm_space = {
         # as relu can produce large positive values corresponding to very small probabilities.
         # If you change your model to use, say, tanh instead of relu for the last dense layer,
         # the problem will go away.
-        'activation': hp.choice('layer3_activation', ['tanh']),
+        # 'activation': hp.choice('layer3_activation', ['tanh']),
         'is_BN': hp.choice('layer3_is_BN', [False, True]),
     },
 
