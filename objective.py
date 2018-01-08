@@ -23,10 +23,6 @@ def lstm_objective(params, data_set, target_field, namespace, performance_func, 
     if not os.path.exists(namespace):
         os.makedirs(namespace)
 
-    params_file = os.path.join(namespace, "params.pkl")
-    with open(params_file, 'wb') as output:
-        pickle.dump(params, output)
-
     train, validate = data_set['train'], data_set['validate']
 
     minimum_size = params['time_steps']
@@ -110,19 +106,22 @@ def features_objective(params, ohlcv_list):
     func_list = []
 
     # k line
-    kline_params = params['kline']
-    params_list.append(kline_params)
-    func_list.append(feature_kline)
+    if 'kline' in params:
+        kline_params = params['kline']
+        params_list.append(kline_params)
+        func_list.append(feature_kline)
 
     # ma
-    ma_params = params['ma']
-    params_list.append(ma_params)
-    func_list.append(feature_ma)
+    if 'ma' in params:
+        ma_params = params['ma']
+        params_list.append(ma_params)
+        func_list.append(feature_ma)
 
     # label
-    label_by_ma_price_params = params['label_by_ma_price']
-    params_list.append(label_by_ma_price_params)
-    func_list.append(label_by_ma_price)
+    if 'label_by_ma_price' in params:
+        label_by_ma_price_params = params['label_by_ma_price']
+        params_list.append(label_by_ma_price_params)
+        func_list.append(label_by_ma_price)
 
     construct_feature_func = partial(construct_features, params_list=params_list, func_list=func_list, test=False)
     stk_features_list = construct_features_for_stocks(ohlcv_list, construct_feature_func)

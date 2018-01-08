@@ -3,6 +3,7 @@ from talib.abstract import *
 import numpy as np
 from target.valid_wave.valid_wave import tag_wave_direction
 from data_prepare import categorical_factory
+import matplotlib.pyplot as plt
 
 
 def construct_features1(ohlcv, params, test=False):
@@ -108,8 +109,18 @@ def feature_kline(ohlcv, params, test=False):
         params['window']).std().bfill()
 
     col = 'volume_{}'.format(params['window'])
-    data[col] = (ohlcv['volume'] - ohlcv['volume'].rolling(params['window']).mean().bfill()) / ohlcv[
-        'volume'].rolling(params['window']).std().bfill()
+    volume_ratio = np.log(ohlcv['volume'] / ohlcv['volume'].rolling(params['window']).mean().bfill())
+    volume_mean = volume_ratio.rolling(params['window']).mean().bfill()
+    volume_std = volume_ratio.rolling(params['window']).std().bfill()
+    volume_max = volume_mean + 3*volume_std
+    volume_min = volume_mean - 3*volume_std
+    if len(volume_ratio[volume_ratio > volume_max]) > 0:
+        volume_ratio[volume_ratio > volume_max] = volume_max
+    if len(volume_ratio[volume_ratio < volume_min]) > 0:
+        volume_ratio[volume_ratio < volume_min] = volume_min
+
+    norm_volume = (volume_ratio - volume_mean) / volume_std
+    data[col] = norm_volume
 
     if test:
         return pd.concat([data, ohlcv], axis=1)
