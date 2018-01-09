@@ -68,7 +68,7 @@ def lstm_objective(params, data_set, target_field, namespace, performance_func, 
                                           performance_func)
         scores = model.evaluate(to_be_predict_set[tag][1], to_be_predict_set[tag][2], verbose=1)
         performances[tag]['loss'] = scores[0]
-        performances[tag]['metrics'] = scores[0]
+        performances[tag]['metrics'] = scores[1]
 
     with open(os.path.join(namespace, 'performances.pkl'), 'wb') as output:
         pickle.dump(performances, output)

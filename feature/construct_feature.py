@@ -89,38 +89,40 @@ def feature_kline(ohlcv, params, test=False):
     data = pd.DataFrame(index=ohlcv.index)
 
     open_close = (ohlcv['open'] - ohlcv['close']) / ohlcv['close']
-    col = 'open_close_{}'.format(params['window'])
-    data[col] = (open_close - open_close.rolling(params['window']).mean().bfill()) / open_close.rolling(
-        params['window']).std().bfill()
-
     high_close = (ohlcv['high'] - ohlcv['close']) / ohlcv['close']
-    col = 'high_close_{}'.format(params['window'])
-    data[col] = (high_close - high_close.rolling(params['window']).mean().bfill()) / high_close.rolling(
-        params['window']).std().bfill()
-
     low_close = (ohlcv['low'] - ohlcv['close']) / ohlcv['close']
-    col = 'low_close_{}'.format(params['window'])
-    data[col] = (low_close - low_close.rolling(params['window']).mean().bfill()) / low_close.rolling(
-        params['window']).std().bfill()
-
     pct_chg = ohlcv['close'].pct_change().fillna(0)
-    col = 'pct_chg_{}'.format(params['window'])
-    data[col] = (pct_chg - pct_chg.rolling(params['window']).mean().bfill()) / pct_chg.rolling(
-        params['window']).std().bfill()
 
-    col = 'volume_{}'.format(params['window'])
-    volume_ratio = np.log(ohlcv['volume'] / ohlcv['volume'].rolling(params['window']).mean().bfill())
-    volume_mean = volume_ratio.rolling(params['window']).mean().bfill()
-    volume_std = volume_ratio.rolling(params['window']).std().bfill()
-    volume_max = volume_mean + 3*volume_std
-    volume_min = volume_mean - 3*volume_std
-    if len(volume_ratio[volume_ratio > volume_max]) > 0:
-        volume_ratio[volume_ratio > volume_max] = volume_max
-    if len(volume_ratio[volume_ratio < volume_min]) > 0:
-        volume_ratio[volume_ratio < volume_min] = volume_min
+    for window in params['window']:
+        col = 'open_close_{}'.format(window)
+        data[col] = (open_close - open_close.rolling(window).mean().bfill()) / open_close.rolling(
+            window).std().bfill()
 
-    norm_volume = (volume_ratio - volume_mean) / volume_std
-    data[col] = norm_volume
+        col = 'high_close_{}'.format(window)
+        data[col] = (high_close - high_close.rolling(window).mean().bfill()) / high_close.rolling(
+            window).std().bfill()
+
+        col = 'low_close_{}'.format(window)
+        data[col] = (low_close - low_close.rolling(window).mean().bfill()) / low_close.rolling(
+            window).std().bfill()
+
+        col = 'pct_chg_{}'.format(window)
+        data[col] = (pct_chg - pct_chg.rolling(window).mean().bfill()) / pct_chg.rolling(
+            window).std().bfill()
+
+        col = 'volume_{}'.format(window)
+        volume_ratio = np.log(ohlcv['volume'] / ohlcv['volume'].rolling(window).mean().bfill())
+        volume_mean = volume_ratio.rolling(window).mean().bfill()
+        volume_std = volume_ratio.rolling(window).std().bfill()
+        volume_max = volume_mean + 3*volume_std
+        volume_min = volume_mean - 3*volume_std
+        if len(volume_ratio[volume_ratio > volume_max]) > 0:
+            volume_ratio[volume_ratio > volume_max] = volume_max
+        if len(volume_ratio[volume_ratio < volume_min]) > 0:
+            volume_ratio[volume_ratio < volume_min] = volume_min
+
+        norm_volume = (volume_ratio - volume_mean) / volume_std
+        data[col] = norm_volume
 
     if test:
         return pd.concat([data, ohlcv], axis=1)
@@ -171,7 +173,7 @@ def feature_ma(ohlcv, params, test=False):
         ma_list = [1, 2, 3, 5, 8, 13, 21, 34, 55]
 
     if 'window' in params:
-        window = params['window']
+        windows = params['window']
     else:
         window = 128
 
@@ -188,12 +190,13 @@ def feature_ma(ohlcv, params, test=False):
         else:
             mas['ma_{}'.format(win)] = SMA(ohlcv, timeperiod=win, price=price).bfill()
 
-    price_max = ohlcv[price].rolling(window).max().bfill()
-    price_min = ohlcv[price].rolling(window).min().bfill()
-
     standard_mas = pd.DataFrame(index=ohlcv.index)
-    for col in mas.columns:
-        standard_mas[col] = (((mas[col] - price_min) / (price_max - price_min)) - 0.5) * 2
+    for window in windows:
+        price_max = ohlcv[price].rolling(window).max().bfill()
+        price_min = ohlcv[price].rolling(window).min().bfill()
+
+        for col in mas.columns:
+            standard_mas['{}_{}'.format(col, window)] = (((mas[col] - price_min) / (price_max - price_min)) - 0.5) * 2
 
     if test:
         return pd.concat([standard_mas, ohlcv], axis=1)
