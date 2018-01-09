@@ -25,7 +25,7 @@ except:
 lstm_space = {
     'time_steps': hp.choice('time_steps', [64]),
     'batch_size': hp.choice('batch_size', [64]),
-    'epochs': hp.choice('epochs', [100, 200, 300, 400]),  # [100, 200, 500, 1000, 1500, 2000]
+    'epochs': hp.choice('epochs', [400, 600, 1000, 1500, 2000, 3000]),  # [100, 200, 500, 1000, 1500, 2000]
 
     # for class
     'activation_last': hp.choice('activation_last', ['softmax']),
@@ -37,19 +37,19 @@ lstm_space = {
     'loss_type': hp.choice('loss', ['categorical_crossentropy']), #, 'weighted_categorical_crossentropy']),
 
     'layer1': {
-        'units': hp.choice('layer1_units', [32]),
+        'units': hp.choice('layer1_units', [16, 32, 64, 128]),
         # 'relu', 'sigmoid', 'tanh', 'linear'
         'activation': hp.choice('layer1_activation', ['tanh']),
         'is_BN': hp.choice('layer1_is_BN', [False, True]),
     },
     'layer2': {
-        'units': hp.choice('layer2_units', [32]),
+        'units': hp.choice('layer2_units', [16, 32, 64, 128]),
         # 'relu', 'sigmoid', 'tanh', 'linear'
         'activation': hp.choice('layer2_activation', ['tanh']),
         'is_BN': hp.choice('layer2_is_BN', [False, True]),
     },
     'layer3': {
-        'units': hp.choice('layer3_units', [32]),
+        'units': hp.choice('layer3_units', [16, 32, 64, 128]),
         # 'relu', 'sigmoid', 'tanh', 'linear'
         # Loss turns into 'nan'
         # As far as I know, it's the combination of relu and softmax that causes numerical troubles,
@@ -60,7 +60,8 @@ lstm_space = {
         'is_BN': hp.choice('layer3_is_BN', [False, True]),
     },
 
-    'lr': hp.loguniform('lr', np.log(0.0001), np.log(0.01)),
+    'lr': hp.loguniform('lr', np.log(0.000001), np.log(0.0001)),
+    # 'lr': hp.choice('lr', [0.000002]),
     'dropout': hp.quniform('dropout', 0.3, 0.31, 0.1),
     'recurrent_dropout': hp.quniform('recurrent_dropout', 0.3, 0.31, 0.1),
     'kernel_initializer': hp.choice('kernel_initializer', [glorot_uniform(seed=123)]),
@@ -110,7 +111,7 @@ if __name__ == '__main__':
 
     function = "params_select"
     # identity = str(uuid.uuid1())
-    identity = 'test03'
+    identity = 'xxx03'
     print("identity: {}".format(identity))
     namespace = function + '_' + identity
 
