@@ -6,6 +6,7 @@ from loss import weighted_categorical_crossentropy3, weighted_categorical_crosse
 from feature.construct_feature import feature_kline, feature_ma, label_by_ma_price, construct_features
 from functools import partial
 from performance import *
+from keras.callbacks import EarlyStopping
 
 from data_prepare import *
 from log_history import *
@@ -41,15 +42,15 @@ def lstm_objective(params, data_set, target_field, namespace, performance_func, 
 
     model = construct_lstm_model(params, X_train.shape[-1], Y_train.shape[-1], loss=loss)
     log_histroy = LogHistory(os.path.join(namespace, 'history.pkl'))
-    # early_stop = EarlyStopping(monitor='val_loss', min_delta=params['min_delta'], patience=params['patience'],
-    #                            verbose=2, mode='auto')
+    early_stop = EarlyStopping(monitor='val_loss', min_delta=0.0001, patience=100,
+                               verbose=2, mode='auto')
     model.fit(X_train, Y_train,
               batch_size=params['batch_size'],
               epochs=params['epochs'],
               verbose=1,
               validation_data=(X_validate, Y_validate),
               shuffle=params['shuffle'],
-              callbacks=[log_histroy])  # early_stop
+              callbacks=[log_histroy, early_stop])
 
     to_be_predict_set = {}
     to_be_predict_set['validate'] = [validate, X_validate, Y_validate]
@@ -156,5 +157,5 @@ def objective(params, ohlcv_list, namespace):
                                                               'sharpe_ratio'],
                                            mid_type=(nb_class-1) / 2.0, epsilon=0.6)
     return lstm_objective(params['lstm'], data_set, target_field='label', namespace=sub_namespace,
-                          performance_func=performance_func, measure='annual_return', include_test_data=True,
+                          performance_func=performance_func, measure='loss', include_test_data=True,
                           shuffle_test=False)
