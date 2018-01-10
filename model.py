@@ -1,6 +1,7 @@
 from keras.layers import LSTM, Dense, BatchNormalization, TimeDistributed
 from keras.models import Sequential
 from keras.optimizers import RMSprop
+from keras.utils.generic_utils import get_custom_objects
 import numpy as np
 import os
 try:
@@ -10,6 +11,8 @@ except:
 
 
 def construct_lstm_model(params, input_size, output_size, loss='categorical_crossentropy'):
+    get_custom_objects().update({'kernel_initializer': params['kernel_initializer'],
+                                 'bias_initializer': params['bias_initializer']})
     model = Sequential()
     model.add(LSTM(int(params['layer1']['units']),
                    # activation=params['layer1']['activation'],
@@ -17,8 +20,9 @@ def construct_lstm_model(params, input_size, output_size, loss='categorical_cros
                    input_shape=(params['time_steps'], input_size),
                    dropout=params['dropout'],
                    recurrent_dropout=params['recurrent_dropout'],
-                   kernel_initializer=params['kernel_initializer'],
-                   bias_initializer=params['bias_initializer']))
+                   kernel_initializer='kernel_initializer',
+                   bias_initializer='bias_initializer'
+                   ))
     if params['layer1']['is_BN']:
         model.add(BatchNormalization())
 
@@ -27,8 +31,9 @@ def construct_lstm_model(params, input_size, output_size, loss='categorical_cros
                    return_sequences=True,
                    dropout=params['dropout'],
                    recurrent_dropout=params['recurrent_dropout'],
-                   kernel_initializer=params['kernel_initializer'],
-                   bias_initializer=params['bias_initializer']))
+                   kernel_initializer='kernel_initializer',
+                   bias_initializer='bias_initializer'
+                   ))
     if params['layer2']['is_BN']:
         model.add(BatchNormalization())
 
@@ -37,15 +42,17 @@ def construct_lstm_model(params, input_size, output_size, loss='categorical_cros
                    return_sequences=True,
                    dropout=params['dropout'],
                    recurrent_dropout=params['recurrent_dropout'],
-                   kernel_initializer=params['kernel_initializer'],
-                   bias_initializer=params['bias_initializer']))
+                   kernel_initializer='kernel_initializer',
+                   bias_initializer='bias_initializer'
+                   ))
     if params['layer3']['is_BN']:
         model.add(BatchNormalization())
 
     model.add(TimeDistributed(Dense(output_size,
-                                    kernel_initializer=params['kernel_initializer'],
-                                    bias_initializer=params['bias_initializer'],
-                                    activation=params['activation_last'])))
+                                    kernel_initializer='kernel_initializer',
+                                    bias_initializer='bias_initializer',
+                                    activation=params['activation_last']
+                                    )))
 
     model.compile(optimizer=RMSprop(lr=params['lr']), loss=loss, metrics=['accuracy'])
 

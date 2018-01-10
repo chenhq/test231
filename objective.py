@@ -42,15 +42,6 @@ def lstm_objective(params, data_set, target_field, namespace, performance_func, 
 
     model = construct_lstm_model(params, X_train.shape[-1], Y_train.shape[-1], loss=loss)
     log_histroy = LogHistory(os.path.join(namespace, 'history.pkl'))
-    early_stop = EarlyStopping(monitor='val_loss', min_delta=0.0001, patience=100,
-                               verbose=2, mode='auto')
-    model.fit(X_train, Y_train,
-              batch_size=params['batch_size'],
-              epochs=params['epochs'],
-              verbose=1,
-              validation_data=(X_validate, Y_validate),
-              shuffle=params['shuffle'],
-              callbacks=[log_histroy, early_stop])
 
     to_be_predict_set = {}
     to_be_predict_set['validate'] = [validate, X_validate, Y_validate]
@@ -62,6 +53,19 @@ def lstm_objective(params, data_set, target_field, namespace, performance_func, 
         X_test, Y_test = reform_X_Y(test, params['time_steps'], target_field)
 
         to_be_predict_set['test'] = [test, X_test, Y_test]
+
+    pickle.dump(to_be_predict_set, open(os.path.join(namespace, 'to_be_predict_set.pkl'), 'wb'))
+
+    early_stop = EarlyStopping(monitor='val_loss', min_delta=0.0001, patience=100,
+                               verbose=2, mode='auto')
+    log_model = LogModel(namespace, 'acc', [0.35, 0.4, 0.45, 0.5, 0.55, 0.60, 0.65, 0.7, 0.75, 0.8, 0.9, 0.95], 'max')
+    model.fit(X_train, Y_train,
+              batch_size=params['batch_size'],
+              epochs=params['epochs'],
+              verbose=1,
+              validation_data=(X_validate, Y_validate),
+              shuffle=params['shuffle'],
+              callbacks=[log_histroy, log_model])  # early_stop
 
     performances = {}
     for tag in to_be_predict_set:
