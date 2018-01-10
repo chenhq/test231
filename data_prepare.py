@@ -1,6 +1,6 @@
 import multiprocessing
 import random
-
+import _pickle as pickle
 import numpy as np
 import pandas as pd
 
@@ -165,3 +165,12 @@ def get_data(file_name, stks):
     return stk_ohlcv_list
 
 
+def get_pickle_data(pickle_file, stks):
+    idx_slice = pd.IndexSlice
+    stk_ohlcv_list = []
+    all_ohlcv = pickle.load(open(pickle_file, 'rb'))
+    for stk in all_ohlcv.index.get_level_values('code').unique():
+        if len(stks) == 0 or stk in stks:
+            stk_ohlcv = all_ohlcv.loc[idx_slice[stk, :], idx_slice[:]]
+            stk_ohlcv_list.append(stk_ohlcv)
+    return stk_ohlcv_list
