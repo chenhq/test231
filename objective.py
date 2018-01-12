@@ -58,7 +58,7 @@ def lstm_objective(params, data_set, target_field, namespace, performance_func, 
 
     early_stop = EarlyStopping(monitor='val_loss', min_delta=0.0001, patience=100,
                                verbose=2, mode='auto')
-    log_model = LogModel(namespace, 'acc', [0.35, 0.4, 0.45, 0.5, 0.55, 0.60, 0.65, 0.7, 0.75, 0.8, 0.9, 0.95], 'max')
+    log_model = LogModel(namespace, 'acc', [0.35, 0.4, 0.45, 0.5, 0.55, 0.60, 0.65], 'max')
     model.fit(X_train, Y_train,
               batch_size=params['batch_size'],
               epochs=params['epochs'],
