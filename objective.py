@@ -3,7 +3,7 @@ from hyperopt import hp, STATUS_OK
 from keras.initializers import glorot_uniform
 import datetime
 from loss import weighted_categorical_crossentropy3, weighted_categorical_crossentropy5
-from feature.construct_feature import feature_kline, feature_ma, label_by_ma_price, construct_features
+from feature.construct_feature import *
 from functools import partial
 from performance import *
 from keras.callbacks import EarlyStopping
@@ -58,7 +58,8 @@ def lstm_objective(params, data_set, target_field, namespace, performance_func, 
 
     early_stop = EarlyStopping(monitor='val_loss', min_delta=0.0001, patience=100,
                                verbose=2, mode='auto')
-    log_model = LogModel(namespace, 'acc', [0.35, 0.4, 0.45, 0.5, 0.55, 0.60, 0.65], 'max')
+    log_model = LogModel(namespace, 'acc', [0.35, 0.4, 0.45, 0.5, 0.55, 0.60, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95],
+                         'max')
     model.fit(X_train, Y_train,
               batch_size=params['batch_size'],
               epochs=params['epochs'],
@@ -112,9 +113,12 @@ def features_objective(params, ohlcv_list):
 
     # k line
     if 'kline' in params:
-        kline_params = params['kline']
-        params_list.append(kline_params)
+        params_list.append(params['kline'])
         func_list.append(feature_kline)
+
+    if 'kline2' in params:
+        params_list.append(params['kline2'])
+        func_list.append(feature_kline2)
 
     # ma
     if 'ma' in params:
@@ -127,6 +131,10 @@ def features_objective(params, ohlcv_list):
         label_by_ma_price_params = params['label_by_ma_price']
         params_list.append(label_by_ma_price_params)
         func_list.append(label_by_ma_price)
+
+    elif 'label_by_multi_ma' in params:
+        params_list.append(params['label_by_multi_ma'])
+        func_list.append(label_by_multi_ma)
 
     construct_feature_func = partial(construct_features, params_list=params_list, func_list=func_list, test=False)
     stk_features_list = construct_features_for_stocks(ohlcv_list, construct_feature_func)
@@ -152,14 +160,15 @@ def objective(params, ohlcv_list, namespace):
     data_set_file = os.path.join(sub_namespace, 'data_set.pkl')
     pickle.dump(data_set, open(data_set_file, 'wb'))
 
-    quantile_list = params['features']['label_by_ma_price']['quantile_list']
-    class_list = [i for i in range(len(quantile_list)-1)]
+    # quantile_list = params['features']['label_by_ma_price']['quantile_list']
+    # class_list = [i for i in range(len(quantile_list)-1)]
+    class_list = params['features']['label']['class_list']
     nb_class = len(class_list)
     _, reverse_categorical = categorical_factory(class_list)
     performance_func = performance_factory(reverse_categorical,
                                            performance_types=['Y0', 'Y', 'returns', 'cum_returns', 'annual_return',
                                                               'sharpe_ratio'],
-                                           mid_type=(nb_class-1) / 2.0, epsilon=0.6)
+                                           mid_type=(nb_class - 1) / 2.0, epsilon=0.6)
     return lstm_objective(params['lstm'], data_set, target_field='label', namespace=sub_namespace,
                           performance_func=performance_func, measure='loss', include_test_data=True,
                           shuffle_test=False)
