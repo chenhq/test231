@@ -205,6 +205,7 @@ def feature_kline2(ohlcv, params, test=False):
 
     rsi = RSI(ohlcv, timeperiod=14).bfill()
     rsi.name = 'rsi'
+    rsi /= 100
     macd = MACD(ohlcv).bfill()
     macd /= 200.0
     stoch = STOCH(ohlcv).bfill()
