@@ -159,33 +159,34 @@ def feature_kline2(ohlcv, params, test=False):
 
     pre_close = ohlcv['close'].shift(1)
 
-    high_close = (ohlcv['high'] - ohlcv['close']) / pre_close
+    high_close = (ohlcv['high'] - ohlcv['close']) * 10 / pre_close
     high_close.name = 'high_close'
 
-    close_low = (ohlcv['close'] - ohlcv['low']) / pre_close
+    close_low = (ohlcv['close'] - ohlcv['low']) * 10 / pre_close
     close_low.name = 'close_low'
 
-    high_open = (ohlcv['high'] - ohlcv['open']) / pre_close
+    high_open = (ohlcv['high'] - ohlcv['open']) * 10 / pre_close
     high_open.name = 'high_open'
-    open_low = (ohlcv['open'] - ohlcv['low']) / pre_close
+
+    open_low = (ohlcv['open'] - ohlcv['low']) * 10 / pre_close
     open_low.name = 'open_low'
 
     open_close_max = ohlcv[['open', 'close']].max(axis=1)
     open_close_min = ohlcv[['open', 'close']].min(axis=1)
-    up = (ohlcv['high'] - open_close_max) / pre_close
+    up = (ohlcv['high'] - open_close_max) * 10 / pre_close
     up.name = 'up'
-    down = open_close_min - ohlcv['low'] / pre_close
+    down = (open_close_min - ohlcv['low']) * 10 / pre_close
     down.name = 'down'
-    wide = (ohlcv['open'] - ohlcv['close']).abs() / pre_close
+    wide = (ohlcv['open'] - ohlcv['close']).abs() * 10 / pre_close
     wide.name = 'wide'
 
-    open_ = (ohlcv['open'] - pre_close) / pre_close
+    open_ = (ohlcv['open'] - pre_close) * 10 / pre_close
     open_.name = 'open_'
-    high_ = (ohlcv['high'] - pre_close) / pre_close
+    high_ = (ohlcv['high'] - pre_close) * 10 / pre_close
     high_.name = 'high_'
-    low_ = (ohlcv['low'] - pre_close) / pre_close
+    low_ = (ohlcv['low'] - pre_close) * 10 / pre_close
     low_.name = 'low_'
-    close_ = (ohlcv['close'] - pre_close) / pre_close
+    close_ = (ohlcv['close'] - pre_close) * 10 / pre_close
     close_.name = 'close_'
     up_down = (ohlcv['close'] - pre_close).map(np.sign)
     up_down.name = 'up_down'
@@ -203,10 +204,13 @@ def feature_kline2(ohlcv, params, test=False):
     diff_down_wide.name = 'diff_down_wide'
 
     rsi = RSI(ohlcv, timeperiod=14).bfill()
+    rsi.name = 'rsi'
     macd = MACD(ohlcv).bfill()
+    macd /= 200.0
     stoch = STOCH(ohlcv).bfill()
     k, d = stoch['slowk'], stoch['slowd']
     j = 3 * k - 2 * d
+    j.name = 'j'
 
     k = (k - 50) / 50
     d = (d - 50) / 50
@@ -235,6 +239,7 @@ def feature_kline2(ohlcv, params, test=False):
 
     pct_chg = ohlcv['close'].pct_change().fillna(0)
     pct_chg.name = 'pct_chg'
+    pct_chg *= 10
 
     features_list = [close_by_window, volume_by_window, open_, high_, low_, close_, up_down,
                      high_close, close_low, high_open, open_low,
