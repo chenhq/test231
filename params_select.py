@@ -27,7 +27,7 @@ identity = 'test01'
 lstm_space = {
     'time_steps': hp.choice('time_steps', [64]),
     'batch_size': hp.choice('batch_size', [64]),
-    'epochs': hp.choice('epochs', [4000]),  # [100, 200, 500, 1000, 1500, 2000]
+    'epochs': hp.choice('epochs', [500]),  # [100, 200, 500, 1000, 1500, 2000]
 
     # for class
     'activation_last': hp.choice('activation_last', ['softmax']),
@@ -63,7 +63,7 @@ lstm_space = {
     },
 
     # 'lr': hp.loguniform('lr', np.log(0.000001), np.log(0.0001)),
-    'lr': hp.choice('lr', [0.001]),
+    'lr': hp.choice('lr', [0.0001]),
     'dropout': hp.quniform('dropout', 0.4, 0.41, 0.1),
     'recurrent_dropout': hp.quniform('recurrent_dropout', 0.4, 0.41, 0.1),
     'kernel_initializer': hp.choice('kernel_initializer', [glorot_uniform(seed=123)]),

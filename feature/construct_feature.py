@@ -194,7 +194,7 @@ def feature_kline2(ohlcv, params, test=False):
     diff_high_close_low = high_close - close_low
     diff_high_close_low.name = 'diff_high_close_low'
     diff_high_open_low = high_open - open_low
-    diff_high_open_low.name = 'diff_high_close_low'
+    diff_high_open_low.name = 'diff_high_open_low'
 
     diff_up_down = up - down
     diff_up_down.name = 'diff_up_down'
