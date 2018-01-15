@@ -226,21 +226,22 @@ def feature_kline2(ohlcv, params, test=False):
     # bbands
     bbands = BBANDS(ohlcv)
     close_to_upperband = ohlcv['close'] - bbands['upperband']
-    close_to_upperband.name = 'to_upperband'
+    close_to_upperband.name = 'close_to_upperband'
     close_to_upperband /= 250
     close_to_middleband = ohlcv['close'] - bbands['middleband']
-    close_to_middleband.name = 'to_middleband'
+    close_to_middleband.name = 'close_to_middleband'
     close_to_middleband /= 250
     close_to_lowerband = ohlcv['close'] - bbands['lowerband']
-    close_to_lowerband.name = 'to_lowerband'
+    close_to_lowerband.name = 'close_to_lowerband'
     close_to_lowerband /= 250
 
     upper_to_middle = bbands['upperband'] - bbands['middleband']
     upper_to_middle.name = 'upper_to_middle'
     upper_to_middle /= 250
+
     lower_to_middle = bbands['lowerband'] - bbands['middleband']
     lower_to_middle.name = 'lower_to_middle'
-    upper_to_middle /= 250
+    lower_to_middle /= 250
 
     upper_close_middle_ratio = close_to_middleband / upper_to_middle
     upper_close_middle_ratio.name = 'upper_close_middle_ratio'
