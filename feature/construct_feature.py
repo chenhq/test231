@@ -225,12 +225,15 @@ def feature_kline2(ohlcv, params, test=False):
 
     # bbands
     bbands = BBANDS(ohlcv)
-    to_upperband = ohlcv['close'] - bbands['uperband']
+    to_upperband = ohlcv['close'] - bbands['upperband']
     to_upperband.name = 'to_upperband'
+    to_upperband /= 250
     to_middleband = ohlcv['close'] - bbands['middleband']
     to_middleband.name = 'to_middleband'
+    to_middleband /= 250
     to_lowerband = ohlcv['close'] - bbands['lowerband']
     to_lowerband.name = 'to_lowerband'
+    to_lowerband /= 250
     new_bbands = pd.concat([to_upperband, to_middleband, to_lowerband], axis=1)
 
 

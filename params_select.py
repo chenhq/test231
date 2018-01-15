@@ -27,7 +27,7 @@ identity = 'test01'
 lstm_space = {
     'time_steps': hp.choice('time_steps', [64]),
     'batch_size': hp.choice('batch_size', [64]),
-    'epochs': hp.choice('epochs', [500]),  # [100, 200, 500, 1000, 1500, 2000]
+    'epochs': hp.choice('epochs', [10]),  # [100, 200, 500, 1000, 1500, 2000]
 
     # for class
     'activation_last': hp.choice('activation_last', ['softmax']),
