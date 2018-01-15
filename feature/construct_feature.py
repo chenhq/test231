@@ -243,13 +243,13 @@ def feature_kline2(ohlcv, params, test=False):
     lower_to_middle.name = 'lower_to_middle'
     lower_to_middle /= 250
 
-    upper_close_middle_ratio = close_to_middleband / upper_to_middle
-    upper_close_middle_ratio.name = 'upper_close_middle_ratio'
-    lower_close_middle_ratio = close_to_middleband / lower_to_middle
-    lower_close_middle_ratio.name = 'lower_close_middle_ratio'
+    close_upper_middle_ratio = close_to_middleband / upper_to_middle
+    close_upper_middle_ratio.name = 'close_upper_middle_ratio'
+    close_lower_middle_ratio = close_to_middleband / lower_to_middle
+    close_lower_middle_ratio.name = 'close_lower_middle_ratio'
 
     new_bbands = pd.concat([close_to_upperband, close_to_middleband, close_to_lowerband, upper_to_middle,
-                            lower_to_middle, upper_close_middle_ratio, lower_close_middle_ratio], axis=1)
+                            lower_to_middle, close_upper_middle_ratio, close_lower_middle_ratio], axis=1)
 
     # ma3 = MA(ohlcv, timeperiod=3)
     # ma5 = MA(ohlcv, timeperiod=5)
