@@ -251,6 +251,10 @@ def feature_kline2(ohlcv, params, test=False):
     new_bbands = pd.concat([close_to_upperband, close_to_middleband, close_to_lowerband, upper_to_middle,
                             lower_to_middle, close_upper_middle_ratio, close_lower_middle_ratio], axis=1)
 
+    ma20 = MA(ohlcv, timeperiod=20).bfill()
+    period_idx = (ma20 - ma20.shift(11)) / ma20.shift(11)
+    period_idx.name = 'period_idx'
+
     # ma3 = MA(ohlcv, timeperiod=3)
     # ma5 = MA(ohlcv, timeperiod=5)
     # ma10 = MA(ohlcv, timeperiod=10)
