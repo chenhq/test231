@@ -223,6 +223,17 @@ def feature_kline2(ohlcv, params, test=False):
     k_d = k - d
     k_d.name = 'k_d'
 
+    # bbands
+    bbands = BBANDS(ohlcv)
+    to_upperband = ohlcv['close'] - bbands['uperband']
+    to_upperband.name = 'to_upperband'
+    to_middleband = ohlcv['close'] - bbands['middleband']
+    to_middleband.name = 'to_middleband'
+    to_lowerband = ohlcv['close'] - bbands['lowerband']
+    to_lowerband.name = 'to_lowerband'
+    new_bbands = pd.concat([to_upperband, to_middleband, to_lowerband], axis=1)
+
+
     # ma3 = MA(ohlcv, timeperiod=3)
     # ma5 = MA(ohlcv, timeperiod=5)
     # ma10 = MA(ohlcv, timeperiod=10)
@@ -246,7 +257,7 @@ def feature_kline2(ohlcv, params, test=False):
                      high_close, close_low, high_open, open_low,
                      diff_high_close_low, diff_high_open_low,
                      up, down, wide, diff_up_down, diff_up_wide, diff_down_wide,
-                     rsi, macd, k, d, j, j_k, j_d, k_d, pct_chg]
+                     rsi, macd, k, d, j, j_k, j_d, k_d, new_bbands, pct_chg]
 
     features = pd.concat(features_list, axis=1)
     features = features.fillna(0)
