@@ -252,17 +252,21 @@ def feature_kline2(ohlcv, params, test=False):
                             lower_to_middle, close_upper_middle_ratio, close_lower_middle_ratio], axis=1)
 
     ma20 = MA(ohlcv, timeperiod=20).bfill()
-    period_idx = (ma20 - ma20.shift(11)) / ma20.shift(11)
+    period_idx = (ma20 - ma20.shift(11).bfill()) / ma20.shift(11).bfill()
     period_idx.name = 'period_idx'
 
-    volatility5 = ohlcv['close'].rolling(5).std()
-    volatility10 = ohlcv['close'].rolling(10).std()
-    volatility20 = ohlcv['close'].rolling(20).std()
+    volatility5 = ohlcv['close'].rolling(5).std().bfill()
+    volatility10 = ohlcv['close'].rolling(10).std().bfill()
+    volatility20 = ohlcv['close'].rolling(20).std().bfill()
 
     volatility_5_10 = volatility5 / volatility10
     volatility_5_10.name = 'volatility_5_10'
     volatility_5_20 = volatility5 / volatility20
     volatility_5_20.name = 'volatility_5_20'
+
+    volatility_threshold = (ohlcv['close'] - ohlcv['close'].rolling(5).mean().bfill()) / volatility5
+    volatility_threshold.name = 'volatility_threshold'
+
 
     # ma3 = MA(ohlcv, timeperiod=3)
     # ma5 = MA(ohlcv, timeperiod=5)
@@ -288,7 +292,8 @@ def feature_kline2(ohlcv, params, test=False):
                      diff_high_close_low, diff_high_open_low,
                      up, down, wide, diff_up_down, diff_up_wide, diff_down_wide,
                      rsi, macd, k, d, j, j_k, j_d, k_d, new_bbands,
-                     period_idx, volatility_5_10, volatility_5_20, pct_chg]
+                     period_idx, volatility_5_10, volatility_5_20, volatility_threshold,
+                     pct_chg]
 
     features = pd.concat(features_list, axis=1)
     features = features.fillna(0)
@@ -297,36 +302,6 @@ def feature_kline2(ohlcv, params, test=False):
         return pd.concat([features, ohlcv], axis=1)
     else:
         return features
-
-
-# params = {
-#     'window': [3, 5, 10]
-# }
-def label_by_multi_ma(ohlcv, params, test=False):
-    up_down = ohlcv['close'].pct_change().map(np.sign).fillna(0)
-    close = ohlcv['close']
-    win1, win2, win3 = params['window']
-    ma1 = MA(ohlcv, timeperiod=win1).shift(-win1)
-    ma2 = MA(ohlcv, timeperiod=win2).shift(-win2)
-    ma3 = MA(ohlcv, timeperiod=win3).shift(-win3)
-
-    result = pd.Series(index=ohlcv.index)
-    result.name = 'label'
-    i = 0
-    while i < len(ohlcv):
-        if up_down.iloc[i] != 0:
-            direction = up_down.iloc[i]
-        else:
-            if close.iloc[i] != ma1.iloc[i]:
-                direction = np.sign(ma1.iloc[i] - close.iloc[i])
-            elif close.iloc[i] != ma2.iloc[i]:
-                direction = np.sign(ma2.iloc[i] - close.iloc[i])
-            elif close.iloc[i] != ma3.iloc[i]:
-                direction = np.sign(ma2.iloc[i] - close.iloc[i])
-            else:
-                direction = 1
-
-        j = i + 1
 
 
 # params = {
