@@ -111,7 +111,7 @@ features_space = {
     #                                                 ])
     # },
     'label_by_multi_ma': {
-        'window': hp.choice('label_window', [[3, 5, 10]])
+        'window': hp.choice('label_window', [[10, 20, 30]])
     },
     'label': {
         'class_list': hp.choice('class_list', [[0.0, 1.0]])

@@ -300,36 +300,6 @@ def feature_kline2(ohlcv, params, test=False):
 
 
 # params = {
-#     'window': [3, 5, 10]
-# }
-def label_by_multi_ma(ohlcv, params, test=False):
-    up_down = ohlcv['close'].pct_change().map(np.sign).fillna(0)
-    close = ohlcv['close']
-    win1, win2, win3 = params['window']
-    ma1 = MA(ohlcv, timeperiod=win1).shift(-win1)
-    ma2 = MA(ohlcv, timeperiod=win2).shift(-win2)
-    ma3 = MA(ohlcv, timeperiod=win3).shift(-win3)
-
-    result = pd.Series(index=ohlcv.index)
-    result.name = 'label'
-    i = 0
-    while i < len(ohlcv):
-        if up_down.iloc[i] != 0:
-            direction = up_down.iloc[i]
-        else:
-            if close.iloc[i] != ma1.iloc[i]:
-                direction = np.sign(ma1.iloc[i] - close.iloc[i])
-            elif close.iloc[i] != ma2.iloc[i]:
-                direction = np.sign(ma2.iloc[i] - close.iloc[i])
-            elif close.iloc[i] != ma3.iloc[i]:
-                direction = np.sign(ma2.iloc[i] - close.iloc[i])
-            else:
-                direction = 1
-
-        j = i + 1
-
-
-# params = {
 #     'window': 250,
 #     'next_ma_window': 3,
 #     'quantile_list': [0, 0.1, 0.3, 0.7, 0.9, 1]
