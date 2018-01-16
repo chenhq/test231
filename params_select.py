@@ -89,11 +89,11 @@ features_space = {
     'kline2': {
         'window': hp.choice('kline2_window', [256])
     },
-    # 'ma': {
-    #     'ma_list': hp.choice('ma_list', [[1, 2, 3, 5, 8, 13, 21]]),
-    #     'window': hp.choice('ma_window', [[60]]),
-    #     'price': hp.choice('price', ['close'])
-    # },
+    'ma': {
+        'ma_list': hp.choice('ma_list', [[1, 2, 3, 5, 8, 13, 21]]),
+        'window': hp.choice('ma_window', [[60]]),
+        'price': hp.choice('price', ['close'])
+    },
     # 'label_by_ma_price': {
     #     'window': hp.choice('label_window', [60]),
     #     'next_ma_window': hp.choice('next_ma_window', [3]),

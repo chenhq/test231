@@ -252,7 +252,7 @@ def feature_kline2(ohlcv, params, test=False):
                             lower_to_middle, close_upper_middle_ratio, close_lower_middle_ratio], axis=1)
 
     ma20 = MA(ohlcv, timeperiod=20).bfill()
-    period_idx = (ma20 - ma20.shift(11).bfill()) / ma20.shift(11).bfill()
+    period_idx = (ohlcv['close'] - ma20.shift(11).bfill()) * 10 / ma20.shift(11).bfill()
     period_idx.name = 'period_idx'
 
     volatility5 = ohlcv['close'].rolling(5).std().bfill()
