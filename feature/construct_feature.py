@@ -252,17 +252,21 @@ def feature_kline2(ohlcv, params, test=False):
                             lower_to_middle, close_upper_middle_ratio, close_lower_middle_ratio], axis=1)
 
     ma20 = MA(ohlcv, timeperiod=20).bfill()
-    period_idx = (ma20 - ma20.shift(11)) / ma20.shift(11)
+    period_idx = (ma20 - ma20.shift(11).bfill()) / ma20.shift(11).bfill()
     period_idx.name = 'period_idx'
 
-    volatility5 = ohlcv['close'].rolling(5).std()
-    volatility10 = ohlcv['close'].rolling(10).std()
-    volatility20 = ohlcv['close'].rolling(20).std()
+    volatility5 = ohlcv['close'].rolling(5).std().bfill()
+    volatility10 = ohlcv['close'].rolling(10).std().bfill()
+    volatility20 = ohlcv['close'].rolling(20).std().bfill()
 
     volatility_5_10 = volatility5 / volatility10
     volatility_5_10.name = 'volatility_5_10'
     volatility_5_20 = volatility5 / volatility20
     volatility_5_20.name = 'volatility_5_20'
+
+    volatility_threshold = (ohlcv['close'] - ohlcv['close'].rolling(5).mean().bfill()) / volatility5
+    volatility_threshold.name = 'volatility_threshold'
+
 
     # ma3 = MA(ohlcv, timeperiod=3)
     # ma5 = MA(ohlcv, timeperiod=5)
@@ -288,7 +292,8 @@ def feature_kline2(ohlcv, params, test=False):
                      diff_high_close_low, diff_high_open_low,
                      up, down, wide, diff_up_down, diff_up_wide, diff_down_wide,
                      rsi, macd, k, d, j, j_k, j_d, k_d, new_bbands,
-                     period_idx, volatility_5_10, volatility_5_20, pct_chg]
+                     period_idx, volatility_5_10, volatility_5_20, volatility_threshold,
+                     pct_chg]
 
     features = pd.concat(features_list, axis=1)
     features = features.fillna(0)
