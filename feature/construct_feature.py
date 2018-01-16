@@ -287,7 +287,8 @@ def feature_kline2(ohlcv, params, test=False):
                      high_close, close_low, high_open, open_low,
                      diff_high_close_low, diff_high_open_low,
                      up, down, wide, diff_up_down, diff_up_wide, diff_down_wide,
-                     rsi, macd, k, d, j, j_k, j_d, k_d, new_bbands, period_idx, pct_chg]
+                     rsi, macd, k, d, j, j_k, j_d, k_d, new_bbands,
+                     period_idx, volatility_5_10, volatility_5_20, pct_chg]
 
     features = pd.concat(features_list, axis=1)
     features = features.fillna(0)
